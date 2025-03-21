@@ -3,14 +3,19 @@ import Header from './Header'
 import Content from './Content'
 import Footer from './Footer'
 import ToolBar from './ToolBar'
+import './App.css'
 
 
 function App() {
 
   return (
       <>
-        <Header/>
-        <Footer/>
+        <div className='Container'>
+          <Header/>
+          <ToolBar/>
+          <Content/>
+          <Footer/>
+        </div>
       </>
 
   )
