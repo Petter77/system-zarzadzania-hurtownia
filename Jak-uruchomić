@@ -1,0 +1,24 @@
+1.
+pobrać 
+https://nodejs.org/en/download
+
+2.
+zapisać piliki projektu
+lub
+zklonować repozytorium za pomocą np. vs code
+
+3.
+otworzyć terminal w miejscu gdzie jest zapisany projekt
+
+4.
+wpisać 4 komendy:
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Unrestricted
+
+npm create vite@latest 
+
+npm install
+
+npm run dev
+
+5.
+powinno dzialać :)
