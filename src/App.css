@@ -1,21 +1,44 @@
-.Container{
-  overflow: auto;
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
 }
 
 .Header {
-  margin: 5px;
-  float: top;
+  width: 100%;
+  height: 30%;
+  background-color: #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.main {
+  display: flex;
+  flex: 1;
 }
 
 .ToolBar {
-  margin: 5px;
+  float: left;
+  width: 20%;
+  height: 50%;
+  background-color: #f4f4f4;
+  padding: 10px;
 }
 
 .Content {
-  float:left;
+  float: left;
+  width: 80%;
+  height: 50%;
+  background-color: #fff;
+  padding: 20px;
 }
 
 .Footer {
   clear: both;
+  width: 100%;
+  height: 20%;
+  background-color: #ddd;
+  text-align: center;
+  padding: 10px;
 }
-
