@@ -3,7 +3,7 @@ const packageJson = "0.0.1"
 function Footer()
 {
     return(
-        <div>
+        <div className='Footer'>
             <p>
                 &copy; &nbsp;{new Date().getFullYear()}   &nbsp;
                 System Zarządzania Urządzeniami sieciowymi w Magazynie
