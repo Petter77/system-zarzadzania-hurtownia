@@ -1,29 +1,44 @@
+html{
+  background-color: rgb(70, 100, 100);
+  height: 100%;
+}
+body{
+  height: 100%;
+}
+#root
+{
+  height: 100%;
+}
+
 .Container {
-  background-color: rgb(126, 172, 172);
+  background-color: rgb(70, 100, 100);
   width: 100%;
-  height: 100vh;
+  height: 100%;
 }
 
 
 .Header {
+  padding: 5px;
   width: 100%;
+  min-height: 30px;
   height: 5%;
-  background-color: rgb(126, 172, 172);
+  background-color: rgb(70, 100, 100);
   text-align: left;
 }
 
 
 .ToolBar {
+  color: white;
   float: left;
-  width: 10%;
+  width: 140px;
   height: 90%;
-  background-color: rgb(126, 172, 172);
+  background-color: rgb(70, 100, 100);
 }
 
 
 .Content {
   float: left;
-  width: 90%;
+  width: 70%;
   height: 90%;
   background-color: #cacaca;
 }
@@ -32,10 +47,72 @@
   clear: both;
   width: 100%;
   height: 5%;
-  background-color: rgb(126, 172, 172);
+  background-color: rgb(70, 100, 100);
   text-align: center;
 }
 
 #acc{
   float: right;
 }
+
+details {
+  background-color: rgb(70, 100, 100);
+  width: 100%;
+  transition: max-height 0.5s ease-in-out;
+  overflow: hidden;
+  max-height: 30px;
+}
+
+summary {
+  font-weight: bold;
+  color: white;
+  cursor: pointer;
+  padding: 5px;
+  list-style: none;
+  background-color: rgb(70, 100, 100);
+}
+
+summary:hover {
+  background-color: #dddbdb;
+  color: black;
+}
+
+summary::after {
+  content: "| ▼";
+  font-size: 12px;
+  float: right;
+}
+
+details[open] summary::after {
+  content: "| ▲";
+
+}
+
+details[open] summary {
+  background-color: rgb(47, 74, 97);
+}
+
+details[open] {
+  max-height: 500px;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+.ToolBar button
+{
+  all: unset;
+  cursor: pointer;
+  background-color: rgb(47, 74, 97);
+  width: 110px;
+  color: white;
+  padding: 5px;
+  text-align: left;
+
+}
+.ToolBar button:hover{
+  color: black;
+  background-color: #dddbdb;
+}
+
