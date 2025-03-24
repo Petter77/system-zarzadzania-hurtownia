@@ -1,9 +1,12 @@
 html{
-  background-color: rgb(70, 100, 100);
+  background-color: rgb(199, 158, 97);
   height: 100%;
+  width: 100%;
 }
 body{
   height: 100%;
+  margin: 0;
+  width: 100%;
 }
 #root
 {
@@ -19,44 +22,59 @@ body{
 
 .Header {
   padding: 5px;
-  width: 100%;
-  min-height: 30px;
-  height: 5%;
+  width: 99%;
+  height: 3%;
   background-color: rgb(70, 100, 100);
   text-align: left;
+  
 }
 
 
 .ToolBar {
   color: white;
   float: left;
-  width: 140px;
-  height: 90%;
+  width: 10%;
+  height: 93%;
   background-color: rgb(70, 100, 100);
 }
 
 
 .Content {
   float: left;
-  width: 70%;
-  height: 90%;
+  width: 90%;
+  height: 93%;
   background-color: #cacaca;
 }
 
 .Footer {
   clear: both;
   width: 100%;
-  height: 5%;
+  height: 2%;
+  font-size: 14px;
   background-color: rgb(70, 100, 100);
   text-align: center;
+  align-items: center;
 }
 
 #acc{
+  all: unset;
   float: right;
+  width: 30px;
+  height: 30px;
+  border-radius: 30px;
+  color: white;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+}
+#acc:hover{
+  color: black;
+  background-color: #dddbdb;
 }
 
 details {
-  background-color: rgb(70, 100, 100);
+  background-color: rgb(47, 74, 97);
   width: 100%;
   transition: max-height 0.5s ease-in-out;
   overflow: hidden;
@@ -65,11 +83,13 @@ details {
 
 summary {
   font-weight: bold;
+  font-size: 20px;
   color: white;
   cursor: pointer;
   padding: 5px;
   list-style: none;
   background-color: rgb(70, 100, 100);
+  border-top: 1px solid white;
 }
 
 summary:hover {
@@ -105,14 +125,40 @@ summary::-webkit-details-marker {
   all: unset;
   cursor: pointer;
   background-color: rgb(47, 74, 97);
-  width: 110px;
+  width: 120px;
   color: white;
   padding: 5px;
+  border-top-right-radius: 40px;
+  border-bottom-right-radius: 40px;
   text-align: left;
-
+  font-size: 18px;
 }
 .ToolBar button:hover{
   color: black;
   background-color: #dddbdb;
 }
+
+#search{
+  height:max-content;
+  width: 150px;
+  border-radius: 20px;
+  padding: 5px;
+  margin-left: 20px;
+}
+
+.hbutton{
+  all: unset;
+  cursor: pointer;
+  border-radius: 20px;
+  padding: 5px;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.hbutton:hover{
+  color: black;
+  background-color: #dddbdb;
+}
+
 
