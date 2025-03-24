@@ -161,4 +161,32 @@ summary::-webkit-details-marker {
   background-color: #dddbdb;
 }
 
+.accMenu {
+  position: absolute;  
+  top: 40px; 
+  right: 0;
+  width: 150px; 
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); 
+  display: none; 
+}
+
+.accMenu.active {
+  display: block; 
+}
+
+.accButton {
+  width: 100%;
+  padding: 10px;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.accButton:hover {
+  background-color: #f0f0f0;
+}
 
