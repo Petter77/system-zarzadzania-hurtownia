@@ -5,16 +5,20 @@ function ToolBar()
         <div className='ToolBar'>
             <details>
                 <summary>Magazine</summary>
-                    <a>Show devices</a><br/>
-                    <a>Receiving devices</a><br/>
-                    <a>Spending devices</a><br/>
+                    <button>Show devices</button><br/>
+                    <button>Receiving devices</button><br/>
+                    <button>Spending devices</button><br/>
             </details>
             <details>
                 <summary>Raports</summary>
-                    <a>Invoices</a><br/>
-                    <a>Settlements</a><br/>
+                    <button>Invoices</button><br/>
+                    <button>Settlements</button><br/>
             </details>
-            <button>New</button>
+            <details>
+                <summary>Add</summary>
+                    <button>New destination</button><br/>
+                    <button>New device</button><br/>
+            </details>
         </div>
     );
 }
