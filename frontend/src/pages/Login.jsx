@@ -15,8 +15,8 @@ function Login({ setUser }) {
 
     try {
       const response = await axios.post(url, {
-        UserName: login,
-        UserPassword: password,
+        username: login,
+        password: password,
       });
 
       sessionStorage.setItem('user', JSON.stringify(response.data));
