@@ -14,10 +14,6 @@ function App() {
     setUser(storedUser);
   }, []);
 
-  if(user && user.rola === 'Administrator'){
-    console.log('Admin')
-  }
-
   return (
     <div className="app">
       {
