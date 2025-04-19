@@ -3,8 +3,8 @@ import './index.css';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import ManageUsers from './pages/ManageUsers';
-import TopBar from './components/TopBar';
-import { Routes, Route } from "react-router";
+import { Routes, Route, Navigate } from "react-router";
+import Layout from "./Layout";
 
 function App() {
 
@@ -20,13 +20,14 @@ function App() {
 
   return(
     <>
-    <TopBar setUserToken={setUserToken} />
-     <Routes>
-      <Route path="/" element={userToken ? <Dashboard /> : <Auth />} />
-      <Route path="/dashboard" element={userToken ? <Dashboard  /> : <Auth />} />
-      <Route path="/auth" element={!userToken ? <Auth setUserToken={setUserToken} /> : <Dashboard />} />
-      <Route path="/manageUsers" element={!userToken ? <Auth setUserToken={setUserToken} /> : <ManageUsers />} />
-    </Routes>
+      <Routes>
+      <Route path="/auth" element={!userToken ? <Auth setUserToken={setUserToken} /> : <Navigate to="/dashboard" replace />} />
+      <Route element={<Layout userToken={userToken} setUserToken={setUserToken} />}>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/manageUsers" element={<ManageUsers />} />
+      </Route>
+      </Routes>
     </>
   )
 }

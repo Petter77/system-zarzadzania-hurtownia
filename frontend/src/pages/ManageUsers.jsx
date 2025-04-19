@@ -1,9 +1,6 @@
 const ManageUsers = () => {
-    return ( 
-        <>
-            ManageUsers
-        </>
-     );
-}
- 
-export default ManageUsers;
+    return <div>ManageUsers</div>;
+  };
+  
+  export default ManageUsers;
+  
