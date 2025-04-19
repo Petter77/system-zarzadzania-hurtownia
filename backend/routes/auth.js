@@ -19,15 +19,15 @@ router.post('/login', checkIfUserName(false), async (req, res) =>{
     const username = req.user.username
     const role = req.user.role;
 
-    const token = jwt.sign({userId}, SECRET_KEY, {expiresIn: "1h"});
     const user = {
-      token,
       userId,
       username,
       role
     }
 
-    res.status(200).json(user);
+    const token = jwt.sign({user}, SECRET_KEY, {expiresIn: "1h"});
+
+    res.status(200).json(token);
 })
 
 module.exports = router;

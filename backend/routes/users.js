@@ -4,6 +4,7 @@ const db = require('../db');
 const bcrypt = require('bcrypt');
 const checkIfUserName = require('../middlewares/auth/checkIfUserName');
 
+// get all users
 router.get('/all', (req, res) =>{
     db.query('SELECT * FROM users', (err, results) =>{
         if (err) return res.status(500).json({ error: 'Błąd serwera' });
@@ -11,12 +12,18 @@ router.get('/all', (req, res) =>{
     })
 })
 
+// get user by user id in db
 router.get('/all/:id', (req, res) =>{
     const {id} = req.params
     db.query('SELECT * FROM users WHERE id=?', [id], (err, result) =>{
         if (err) return res.status(500).json({ error: 'Błąd serwera' });
         res.status(200).json({result})
     })
+})
+
+// get all data about actual logged in user
+router.get('/logged', (req, res) =>{
+    res.status(200).json(req.user.user);
 })
 
 //create new user

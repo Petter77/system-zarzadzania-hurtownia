@@ -1,38 +1,34 @@
-import './App.scss'
-import { Route, Routes, Navigate } from 'react-router-dom';
-import Dashboard from './pages/Dashboard'
-import Login from './pages/Login'
-import Admin from './pages/Admin'
-import { useEffect, useState } from 'react';
-import LogoutButton from './components/LogoutButton/LogoutButton';
+import { useEffect, useState } from "react";
+import './index.css';
+import Auth from './pages/Auth';
+import Dashboard from './pages/Dashboard';
+import ManageUsers from './pages/ManageUsers';
+import TopBar from './components/TopBar';
+import { Routes, Route } from "react-router";
 
 function App() {
-  const [user, setUser] = useState(null);
+
+  const [userToken, setUserToken] = useState(sessionStorage.getItem('user'));
 
   useEffect(() => {
-    const storedUser = JSON.parse(sessionStorage.getItem('user'));
-    setUser(storedUser);
-  }, []);
+    if (userToken) {
+      sessionStorage.setItem("user", userToken);
+    } else {
+      sessionStorage.removeItem("user");
+    }
+  }, [userToken]);
 
-  return (
-    <div className="app">
-      {
-        user ? <LogoutButton setUser={setUser}/> : null 
-      }
-      <div className="main-content">
-        <Routes>
-          <Route path='/' element={!user ? <Login setUser={setUser}/> : <Dashboard />} />
-          <Route path='/login' element={user ? <Navigate to="/" /> : <Login setUser={setUser}/>} />
-          <Route path='/dashboard' element={!user ? <Navigate to="/login" /> : <Dashboard />} />
-          {/* Naprawic */}
-          <Route 
-            path='/admin' 
-            element={(user && user.rola === 'Administrator') ? <Admin /> : <Navigate to="/dashboard" />} 
-          />
-        </Routes>
-      </div>
-    </div>
-  );
+  return(
+    <>
+    <TopBar setUserToken={setUserToken} />
+     <Routes>
+      <Route path="/" element={userToken ? <Dashboard /> : <Auth />} />
+      <Route path="/dashboard" element={userToken ? <Dashboard  /> : <Auth />} />
+      <Route path="/auth" element={!userToken ? <Auth setUserToken={setUserToken} /> : <Dashboard />} />
+      <Route path="/manageUsers" element={!userToken ? <Auth setUserToken={setUserToken} /> : <ManageUsers />} />
+    </Routes>
+    </>
+  )
 }
 
 export default App
