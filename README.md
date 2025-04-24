@@ -14,7 +14,7 @@ Aplikacja webowa do zarządzania hurtownią z systemem autentykacji i zarządzan
 1. **Sklonuj repozytorium:**
 
    ```bash
-   git clone https://github.com/Petter77/system-zarzadzania-hurtownia.git
+   git clone https://github.com/Petter77/system-zarzadzania-hurtownia/blob/autentykacja_i_zarzadzanie_uzytkownikami/
    cd system-zarzadzania-hurtownia
    ```
 
