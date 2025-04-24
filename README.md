@@ -66,6 +66,17 @@ Aplikacja webowa do zarządzania hurtownią z systemem autentykacji i zarządzan
 
    Aplikacja frontendowa powinna być dostępna pod adresem: `http://localhost:3000`
 
+## BAZA DANYCH
+
+**Wstawienie rekordów do tabeli users. Skopiować to polecenie do zakładki sql w tabeli users:**
+```
+INSERT INTO users (id, username, password_hash, role) VALUES
+(21, 'manager', '$2b$10$eed0m6vKPVTKNnP9iZ1kV.z0Xee3U.gzDerzqzYsyTTeTCaVkuzPi', 'manager'),
+(25, 'pracownik1', '$2b$10$F/YE.olyutHzdvl11J3Voegt9EnaGeah3JQsfyes4niopgZxtzqLi', 'user'),
+(26, 'pracownik2', '$2b$10$.8OSmenylr65IOCX9VWmreVK47n2rYtcEEaKJXBYr4wejzc79zCsC', 'user'),
+(27, 'auditor', '$2b$10$CkoZ2qT.h/GkyANBFyjg5eDIKhsEJICBBFg.32ro.yHbhOy/9gS22', 'auditor');
+```
+Hasła są takie same jak loginy do wszystkich użytkowników
 ---
 
 ## ✅ Gotowe!
