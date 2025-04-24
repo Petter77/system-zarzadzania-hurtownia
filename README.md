@@ -37,7 +37,7 @@ Aplikacja webowa do zarządzania hurtownią z systemem autentykacji i zarządzan
    npm start
    ```
 
-   Serwer powinien być dostępny pod adresem: `http://localhost:3000`
+   Serwer powinien być dostępny pod adresem: `http://localhost:5137`
 
 ---
 
