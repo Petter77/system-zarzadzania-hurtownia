@@ -34,13 +34,20 @@ const TopBar = ({ userToken, setUserToken }) => {
   }, [userToken]);
 
   return (
-    <>
-      <div>
-        <span>TopBar</span>
-        {user && <span> | Zalogowany jako: {user.username}</span>}
-        {user && <button onClick={handleLogout}>Wyloguj się</button>}
-      </div>
-    </>
+    <div className="bg-blue-600 text-white p-4 flex justify-between items-center">
+      <span className="text-xl font-semibold">TopBar</span>
+      {user && (
+        <div className="flex items-center space-x-4">
+          <span className="text-lg">Zalogowany jako: <span className="font-bold">{user.username}</span></span>
+          <button
+            onClick={handleLogout}
+            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400"
+          >
+            Wyloguj się
+          </button>
+        </div>
+      )}
+    </div>
   );
 };
 

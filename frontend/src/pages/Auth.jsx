@@ -32,27 +32,43 @@ function Auth({ setUserToken }) {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>Logowanie</h2>
+    <div className="min-h-screen flex justify-center items-center bg-gray-100">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm"
+      >
+        <h2 className="text-2xl font-bold mb-4 text-center">Logowanie</h2>
 
-      <input
-        type="text"
-        placeholder="Nazwa użytkownika"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-      />
+        <div className="mb-4">
+          <input
+            type="text"
+            placeholder="Nazwa użytkownika"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="w-full px-4 py-2 border rounded-lg"
+          />
+        </div>
 
-      <input
-        type="password"
-        placeholder="Hasło"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+        <div className="mb-4">
+          <input
+            type="password"
+            placeholder="Hasło"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-4 py-2 border rounded-lg"
+          />
+        </div>
 
-      {error && <p>{error}</p>}
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
-      <button type="submit">Zaloguj się</button>
-    </form>
+        <button
+          type="submit"
+          className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600"
+        >
+          Zaloguj się
+        </button>
+      </form>
+    </div>
   );
 }
 
