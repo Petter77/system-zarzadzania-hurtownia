@@ -29,24 +29,15 @@ Aplikacja webowa do zarządzania hurtownią z systemem autentykacji i zarządzan
    ```bash
    npm install
    ```
+   
 
-4. **Utwórz plik `.env` i dodaj konfigurację:**
-
-   ```env
-   PORT=5000
-   MONGO_URI=mongodb://localhost:27017/hurtownia
-   JWT_SECRET=twoj_tajny_klucz
-   ```
-
-   Upewnij się, że MongoDB jest uruchomione i dostępne pod podanym adresem.
-
-5. **Uruchom serwer:**
+4. **Uruchom serwer:**
 
    ```bash
-   npm run dev
+   npm start
    ```
 
-   Serwer powinien być dostępny pod adresem: `http://localhost:5000`
+   Serwer powinien być dostępny pod adresem: `http://localhost:3000`
 
 ---
 
@@ -66,18 +57,11 @@ Aplikacja webowa do zarządzania hurtownią z systemem autentykacji i zarządzan
    npm install
    ```
 
-3. **Utwórz plik `.env` i dodaj konfigurację:**
-
-   ```env
-   REACT_APP_API_URL=http://localhost:5000/api
-   ```
-
-   Upewnij się, że adres API odpowiada adresowi, pod którym działa backend.
 
 4. **Uruchom aplikację:**
 
    ```bash
-   npm start
+   npm run dev
    ```
 
    Aplikacja frontendowa powinna być dostępna pod adresem: `http://localhost:3000`
