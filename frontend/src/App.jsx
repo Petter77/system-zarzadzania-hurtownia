@@ -47,11 +47,11 @@ return (
         <Route path="/dashboard" element={<Dashboard />} />
         
         {user && user.role === 'manager' && (
-          <Route path="/manageUsers" element={<ManageUsers userToken={userToken} />} />
+          <Route path="/manage-employees" element={<ManageUsers userToken={userToken} />} />
         )}
 
         {user && user.role !== 'manager' && (
-          <Route path="/manageUsers" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/manage-employees" element={<Navigate to="/dashboard" replace />} />
         )}
       </Route>
     </Routes>
