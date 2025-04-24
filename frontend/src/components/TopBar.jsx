@@ -3,13 +3,13 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const TopBar = ({ userToken, setUserToken }) => {
-  const [results, setResults] = useState(null);
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
   const handleLogout = () => {
     sessionStorage.removeItem('user');
     setUserToken(null);
-    setResults(null);
+    setUser(null);
     navigate('/auth');
   };
 
@@ -20,7 +20,7 @@ const TopBar = ({ userToken, setUserToken }) => {
           Authorization: `Bearer ${userToken}`,
         },
       });
-      setResults(res.data);
+      setUser(res.data);
     } catch (error) {
       console.error('Błąd podczas pobierania danych użytkownika:', error);
       handleLogout();
@@ -37,8 +37,8 @@ const TopBar = ({ userToken, setUserToken }) => {
     <>
       <div>
         <span>TopBar</span>
-        {results && <span> | Zalogowany jako: {results.username}</span>}
-        {results && <button onClick={handleLogout}>Wyloguj się</button>}
+        {user && <span> | Zalogowany jako: {user.username}</span>}
+        {user && <button onClick={handleLogout}>Wyloguj się</button>}
       </div>
     </>
   );

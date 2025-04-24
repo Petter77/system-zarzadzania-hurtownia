@@ -12,7 +12,6 @@ const Layout = ({ userToken, setUserToken }) => {
         <TopBar userToken={userToken} setUserToken={setUserToken} />
       </header>
       <main>
-        <h1>Main</h1>
         <Outlet />
       </main>
     </>

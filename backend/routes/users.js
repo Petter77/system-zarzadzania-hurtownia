@@ -3,9 +3,10 @@ const router = express.Router();
 const db = require('../db');
 const bcrypt = require('bcrypt');
 const checkIfUserName = require('../middlewares/auth/checkIfUserName');
+const authorizeRoles = require('../middlewares/auth/authorizeRoles');
 
 // get all users
-router.get('/all', (req, res) =>{
+router.get('/all', authorizeRoles('manager'), (req, res) =>{
     db.query('SELECT * FROM users', (err, results) =>{
         if (err) return res.status(500).json({ error: 'Błąd serwera' });
         res.status(200).json({results})
@@ -13,7 +14,7 @@ router.get('/all', (req, res) =>{
 })
 
 // get user by user id in db
-router.get('/all/:id', (req, res) =>{
+router.get('/all/:id', authorizeRoles('manager'), (req, res) =>{
     const {id} = req.params
     db.query('SELECT * FROM users WHERE id=?', [id], (err, result) =>{
         if (err) return res.status(500).json({ error: 'Błąd serwera' });
@@ -27,7 +28,7 @@ router.get('/logged', (req, res) =>{
 })
 
 //create new user
-router.post('/create', checkIfUserName(true), async (req, res) => {
+router.post('/create', authorizeRoles('manager'), checkIfUserName(true), async (req, res) => {
     const { username, password, role} = req.body
   
     if (!username || !password ||!role) return res.status(400).json({ error: 'Wypełnij wszystkie pola!' });
@@ -45,7 +46,7 @@ router.post('/create', checkIfUserName(true), async (req, res) => {
   });
 
 // delete user by id
-router.delete('/delete/:id', (req, res) =>{
+router.delete('/delete/:id', authorizeRoles('manager'), (req, res) =>{
     const {id} = req.params
     db.query('DELETE FROM users WHERE id=?', [id], (err) =>{
         if (err) return res.status(500).json({ error: 'Błąd serwera' });
@@ -54,7 +55,7 @@ router.delete('/delete/:id', (req, res) =>{
 })
 
 // update user by id
-router.put('/update/:id', async (req, res) => {
+router.put('/update/:id', authorizeRoles('manager'), async (req, res) => {
     const { id } = req.params;
     const { username, password, role } = req.body;
 
@@ -93,3 +94,4 @@ router.put('/update/:id', async (req, res) => {
 });
 
 module.exports = router;
+
