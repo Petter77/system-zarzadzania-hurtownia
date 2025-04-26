@@ -4,6 +4,9 @@ import axios from 'axios';
 const Invoices = () => {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const addInvoices = () => {
+    //adding Invoices
+  };
 
   useEffect(() => {
     const fetchInvoices = async () => {
@@ -17,6 +20,8 @@ const Invoices = () => {
       }
     };
 
+    
+
     fetchInvoices();
   }, []);
 
@@ -24,7 +29,7 @@ const Invoices = () => {
 
   return (
     <div>
-      <h1>Faktury</h1>
+      <h1>Faktury</h1><button onClick={addInvoices}>Dodaj Fakture</button>
       <table>
         <thead>
           <tr>
