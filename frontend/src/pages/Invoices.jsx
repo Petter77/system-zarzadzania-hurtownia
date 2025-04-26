@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import CreateInvoice from "../components/CreateInvoice";
 
 const Invoices = () => {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
   const addInvoices = () => {
     //adding Invoices
   };
@@ -29,7 +31,7 @@ const Invoices = () => {
 
   return (
     <div>
-      <h1>Faktury</h1><button onClick={addInvoices}>Dodaj Fakture</button>
+      <h1>Faktury</h1><button onClick={() => setIsCreateFormOpen(true)}>Dodaj Fakture</button>
       <table>
         <thead>
           <tr>
