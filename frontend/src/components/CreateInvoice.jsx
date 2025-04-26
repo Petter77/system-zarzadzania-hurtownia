@@ -1,80 +1,114 @@
 import { useState } from "react";
 import axios from "axios";
 
-const CreateInvoice = ({ onClose, onInvoiceCreated }) => {
-  const [number, setNumber] = useState("");
-  const [issuedAt, setIssuedAt] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
+const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
+  const [formData, setFormData] = useState({
+    number: "",
+    issued_at: "",
+    description: "",
+    price: "",
+  });
+  const [message, setMessage] = useState(null);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.number || !formData.issued_at || !formData.description || !formData.price) {
+      setMessage("Wszystkie pola są wymagane.");
+      return;
+    }
+
     try {
       await axios.post("http://localhost:3000/invoices/create", {
-        number,
-        issued_at: issuedAt,
-        description,
-        price: parseFloat(price),
+        ...formData,
+        price: parseFloat(formData.price), // upewniamy się, że cena jest liczbą
       });
-      onInvoiceCreated(); // np. odświeżenie listy
-      onClose(); // zamknij formularz
-    } catch (error) {
-      console.error("Błąd podczas tworzenia faktury:", error);
+      setMessage("Faktura została utworzona.");
+      setFormData({ number: "", issued_at: "", description: "", price: "" });
+      handleCreateInvoiceSuccess();
+    } catch (err) {
+      console.error(err);
+      setMessage("Błąd podczas tworzenia faktury.");
     }
   };
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl mb-4 font-semibold">Utwórz nową fakturę</h2>
-      <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
+    <form onSubmit={handleSubmit} className="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-lg">
+      <button
+        type="button"
+        onClick={() => setIsCreateFormOpen(false)}
+        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 mb-4"
+      >
+        Zamknij
+      </button>
+      <h3 className="text-2xl font-semibold mb-4">Stwórz nową fakturę</h3>
+      {message && <p className="text-red-500 text-center font-semibold mb-4">{message}</p>}
+
+      <div className="mb-4">
+        <label htmlFor="number" className="block text-gray-700 mb-2">Numer faktury:</label>
         <input
           type="text"
-          placeholder="Numer faktury"
-          value={number}
-          onChange={(e) => setNumber(e.target.value)}
-          className="border p-2 rounded"
+          name="number"
+          id="number"
+          value={formData.number}
+          onChange={handleChange}
           required
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
+      </div>
+
+      <div className="mb-4">
+        <label htmlFor="issued_at" className="block text-gray-700 mb-2">Data wystawienia:</label>
         <input
           type="date"
-          value={issuedAt}
-          onChange={(e) => setIssuedAt(e.target.value)}
-          className="border p-2 rounded"
+          name="issued_at"
+          id="issued_at"
+          value={formData.issued_at}
+          onChange={handleChange}
           required
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
+      </div>
+
+      <div className="mb-4">
+        <label htmlFor="description" className="block text-gray-700 mb-2">Opis:</label>
         <input
           type="text"
-          placeholder="Opis"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="border p-2 rounded"
+          name="description"
+          id="description"
+          value={formData.description}
+          onChange={handleChange}
+          required
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
+      </div>
+
+      <div className="mb-4">
+        <label htmlFor="price" className="block text-gray-700 mb-2">Cena (zł):</label>
         <input
           type="number"
-          placeholder="Cena"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          className="border p-2 rounded"
           step="0.01"
+          name="price"
+          id="price"
+          value={formData.price}
+          onChange={handleChange}
           required
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
-        <div className="flex justify-end space-x-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
-          >
-            Anuluj
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-          >
-            Zapisz
-          </button>
-        </div>
-      </form>
-    </div>
+      </div>
+
+      <button
+        type="submit"
+        className="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 mt-4"
+      >
+        Utwórz fakturę
+      </button>
+    </form>
   );
 };
 
