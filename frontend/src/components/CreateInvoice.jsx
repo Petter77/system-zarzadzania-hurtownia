@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
-import { useEffect } from "react";
 
 const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
   const [formData, setFormData] = useState({
@@ -13,10 +12,22 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
   });
 
   const [message, setMessage] = useState(null);
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        const res = await axios.get("http://localhost:3000/invoices/inventory-items");
+        setItems(res.data);
+      } catch (error) {
+        console.error("Błąd podczas pobierania przedmiotów:", error);
+      }
+    };
+    fetchItems();
+  }, []);
 
   const handleChange = (e, index = null) => {
     const { name, value } = e.target;
-
     if (index !== null) {
       const newProducts = [...formData.products];
       newProducts[index][name] = value;
@@ -39,35 +50,11 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
     setFormData((prev) => ({ ...prev, products: newProducts }));
   };
 
-
-  const [items, setItems] = useState([]);
-
-  useEffect(() => {
-    const fetchItems = async () => {
-      try {
-        const res = await axios.get("http://localhost:3000/invoices/inventory-items");
-        setItems(res.data);
-      } catch (error) {
-        console.error("Błąd podczas pobierania przedmiotów:", error);
-      }
-    };
-
-    fetchItems();
-  }, []);
-
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const { number, issued_at, recipient_name, recipient_address } = formData;
-
-    if (
-      !number ||
-      !issued_at ||
-      !recipient_name ||
-      !recipient_address ||
-      formData.products.length === 0
-    ) {
+    if (!number || !issued_at || !recipient_name || !recipient_address || formData.products.length === 0) {
       setMessage("Wszystkie pola są wymagane.");
       return;
     }
@@ -93,7 +80,7 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
       handleCreateInvoiceSuccess();
     } catch (err) {
       console.error(err);
-      setMessage("Błąd podczas tworzenia faktury.");
+      //setMessage("Błąd podczas tworzenia faktury.");
     }
   };
 
@@ -103,10 +90,10 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
   );
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100 p-8">
+    <div className="flex justify-center bg-gray-100 py-20 px-4">
       <form
         onSubmit={handleSubmit}
-        className="bg-white border border-gray-300 shadow-lg p-10 rounded-md w-[960px] min-h-[900px] relative flex flex-col"
+        className="relative bg-white border border-gray-300 shadow-lg p-10 rounded-md w-full max-w-[960px]"
       >
         <button
           type="button"
@@ -205,7 +192,6 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
                     ))}
                   </select>
                 </td>
-
                 <td className="py-2 px-4">
                   <input
                     type="number"
@@ -246,7 +232,11 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
           </p>
         </div>
 
-        {message && <p className="text-center text-red-500 font-semibold mb-6">{message}</p>}
+        {message && (
+          <p className="text-center text-red-500 font-semibold mb-6">
+            {message}
+          </p>
+        )}
 
         <div className="text-left mb-8">
           <p className="text-lg font-semibold">Przelew środków wykonać na konto:</p>
