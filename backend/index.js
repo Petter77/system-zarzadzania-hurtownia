@@ -5,6 +5,7 @@ const users = require('./routes/users');
 const invoices = require('./routes/invoices');
 const checkToken = require('./middlewares/auth/checkToken')
 const cors = require("cors");
+const audit_users = require("./routes/audit_users")
 
 const app = express()
 const port = 3000
@@ -16,9 +17,7 @@ app.use(cors({
 
 app.use(bodyParser.json())
 
-//api root endpoints
 app.use('/auth', auth);
 app.use('/users', checkToken, users);
-app.use('/invoices', invoices);
 
 app.listen(port, ()=> console.log(`App listening on port ${port}!`))
