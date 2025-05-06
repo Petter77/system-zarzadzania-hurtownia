@@ -2,33 +2,6 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// // get all invoices with their items
-// router.get('/all', (req, res) => {
-//     const query = `
-//         SELECT 
-//             invoices.number, 
-//             invoices.issued_at, 
-//             invoice_items.description, 
-//             invoice_items.price 
-//         FROM invoices 
-//         INNER JOIN invoice_items ON invoices.id = invoice_items.invoice_id;
-//     `;
-
-//     db.query(query, (err, results) => {
-//         if (err) {
-//             console.error(err);
-//             return res.status(500).json({ error: 'Błąd serwera' });
-//         }
-//         const formattedResults = results.map(row => ({
-//             number: row.number,
-//             issued_at: row.issued_at,
-//             description: row.description,
-//             price: row.price
-//         }));
-
-//         res.status(200).json(formattedResults);
-//     });
-// });
 
 // get all invoices with their grouped items
 router.get('/all', (req, res) => {
@@ -70,35 +43,82 @@ router.get('/all', (req, res) => {
 });
 
 
-//create invoice
+// create invoice
 router.post('/create', (req, res) => {
-    const { number, issued_at, description, price } = req.body;
+    console.log("Odebrano dane z frontendu:", req.body); // <-- DODANE LOGOWANIE
 
-    if (!number || !issued_at || !description || !price) {
+    const {
+        number,
+        issued_at,
+        recipient_name,
+        recipient_address,
+        recipient_nip,
+        products
+    } = req.body;
+
+    if (
+        !number ||
+        !issued_at ||
+        !recipient_name ||
+        !recipient_address ||
+        !products ||
+        !Array.isArray(products) ||
+        products.length === 0
+    ) {
         return res.status(400).json({ error: 'Wszystkie pola są wymagane.' });
     }
 
-    const insertInvoiceQuery = `INSERT INTO invoices (number, issued_at) VALUES (?, ?)`;
-    
-    db.query(insertInvoiceQuery, [number, issued_at], (err, invoiceResult) => {
-        if (err) {
-            console.error('Błąd przy tworzeniu faktury:', err);
-            return res.status(500).json({ error: 'Błąd przy tworzeniu faktury.' });
-        }
+    const insertInvoiceQuery = `
+        INSERT INTO invoices (number, issued_at, recipient_name, recipient_address, recipient_nip)
+        VALUES (?, ?, ?, ?, ?)
+    `;
 
-        const invoiceId = invoiceResult.insertId; // ID nowo stworzonej faktury
-
-        const insertItemQuery = `INSERT INTO invoice_items (invoice_id, description, price) VALUES (?, ?, ?)`;
-        
-        db.query(insertItemQuery, [invoiceId, description, price], (err, itemResult) => {
+    db.query(
+        insertInvoiceQuery,
+        [number, issued_at, recipient_name, recipient_address, recipient_nip],
+        (err, invoiceResult) => {
             if (err) {
-                console.error('Błąd przy dodawaniu pozycji faktury:', err);
-                return res.status(500).json({ error: 'Błąd przy dodawaniu pozycji faktury.' });
+                console.error('Błąd przy tworzeniu faktury:', err);
+                return res.status(500).json({ error: 'Błąd przy tworzeniu faktury.' });
             }
 
-            res.status(201).json({ message: 'Faktura została utworzona pomyślnie.' });
-        });
-    });
+            const invoiceId = invoiceResult.insertId;
+
+            const insertItemsQuery = `
+                INSERT INTO invoice_items (invoice_id, description, price)
+                VALUES ?
+            `;
+
+            const itemValues = products.map(product => [
+                invoiceId,
+                product.description,
+                product.price,
+            ]);
+
+            db.query(insertItemsQuery, [itemValues], (err) => {
+                if (err) {
+                    console.error('Błąd przy dodawaniu pozycji faktury:', err);
+                    return res.status(500).json({ error: 'Błąd przy dodawaniu pozycji faktury.' });
+                }
+
+                res.status(201).json({ message: 'Faktura została utworzona pomyślnie.' });
+            });
+        }
+    );
 });
+
+
+
+// GET /api/inventory-items
+router.get('/inventory-items', (req, res) => {
+    db.query("SELECT id, manufacturer, model, description FROM inventory_items", (err, items) => {
+      if (err) {
+        console.error("Błąd podczas pobierania przedmiotów:", err);
+        return res.status(500).json({ error: 'Błąd serwera przy pobieraniu przedmiotów.' });
+      }
+      res.json(items);
+    });
+  });
+  
 
 module.exports = router;

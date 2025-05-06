@@ -1,12 +1,17 @@
 import { useState } from "react";
 import axios from "axios";
+import { useEffect } from "react";
 
 const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
   const [formData, setFormData] = useState({
     number: "",
     issued_at: "",
+    recipient_name: "",
+    recipient_address: "",
+    recipient_nip: "",
     products: [{ description: "", price: "" }],
   });
+
   const [message, setMessage] = useState(null);
 
   const handleChange = (e, index = null) => {
@@ -34,27 +39,55 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
     setFormData((prev) => ({ ...prev, products: newProducts }));
   };
 
+
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        const res = await axios.get("http://localhost:3000/invoices/inventory-items");
+        setItems(res.data);
+      } catch (error) {
+        console.error("Błąd podczas pobierania przedmiotów:", error);
+      }
+    };
+
+    fetchItems();
+  }, []);
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.number || !formData.issued_at || formData.products.length === 0) {
+    const { number, issued_at, recipient_name, recipient_address } = formData;
+
+    if (
+      !number ||
+      !issued_at ||
+      !recipient_name ||
+      !recipient_address ||
+      formData.products.length === 0
+    ) {
       setMessage("Wszystkie pola są wymagane.");
       return;
     }
 
     try {
       await axios.post("http://localhost:3000/invoices/create", {
-        number: formData.number,
-        issued_at: formData.issued_at,
+        ...formData,
         products: formData.products.map((p) => ({
           description: p.description,
           price: parseFloat(p.price),
         })),
       });
+
       setMessage("Faktura została utworzona.");
       setFormData({
         number: "",
         issued_at: "",
+        recipient_name: "",
+        recipient_address: "",
+        recipient_nip: "",
         products: [{ description: "", price: "" }],
       });
       handleCreateInvoiceSuccess();
@@ -64,15 +97,17 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
     }
   };
 
-  const totalPrice = formData.products.reduce((acc, item) => acc + (parseFloat(item.price) || 0), 0);
+  const totalPrice = formData.products.reduce(
+    (acc, item) => acc + (parseFloat(item.price) || 0),
+    0
+  );
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100 p-8">
-      <form 
-        onSubmit={handleSubmit} 
+      <form
+        onSubmit={handleSubmit}
         className="bg-white border border-gray-300 shadow-lg p-10 rounded-md w-[960px] min-h-[900px] relative flex flex-col"
       >
-        {/* Zamknij */}
         <button
           type="button"
           onClick={() => setIsCreateFormOpen(false)}
@@ -81,80 +116,68 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
           Zamknij
         </button>
 
-        {/* Nagłówek */}
         <div className="flex justify-between items-start mb-10">
           <div className="text-3xl font-bold text-blue-700">LOGO</div>
           <div className="text-right">
-          <input
-            type="text"
-            name="number"
-            value={formData.number}
-            onChange={handleChange}
-            
-            className="font-semibold text-xl bg-transparent border-b border-gray-300 focus:outline-none focus:border-blue-400"
-          />
-
-          <input
-            type="date"
-            name="issued_at"
-            value={formData.issued_at}
-            onChange={handleChange}
-            placeholder="__-__-____"
-            className="text-sm text-gray-700 mt-2 bg-transparent border-b border-gray-300 focus:outline-none focus:border-blue-400"
-          />
+            <input
+              type="text"
+              name="number"
+              value={formData.number}
+              onChange={handleChange}
+              className="font-semibold text-xl bg-transparent border-b border-gray-300 focus:outline-none focus:border-blue-400"
+              placeholder="Numer faktury"
+            />
+            <input
+              type="date"
+              name="issued_at"
+              value={formData.issued_at}
+              onChange={handleChange}
+              className="text-sm text-gray-700 mt-2 bg-transparent border-b border-gray-300 focus:outline-none focus:border-blue-400"
+            />
           </div>
         </div>
 
-        {/* Dane Sprzedawcy / Nabywcy */}
         <div className="grid grid-cols-2 gap-8 mb-10">
           <div>
             <h4 className="font-semibold mb-2">Sprzedawca</h4>
             <p className="text-gray-600 text-sm">Sieciowi</p>
-            <p className="text-gray-600 text-sm">Marsjańska -2a</p>
+            <p className="text-gray-600 text-sm">Marsjańska √-1a</p>
             <p className="text-gray-600 text-sm">NIP: 0000000000</p>
           </div>
           <div>
             <h4 className="font-semibold mb-2">Nabywca</h4>
-            <p className="text-gray-600 text-sm">Imię i nazwisko klienta</p>
-            <p className="text-gray-600 text-sm">Plutońska √-1</p>
-            <p className="text-gray-600 text-sm">NIP: 0000000000</p>
-          </div>
-        </div>
-
-        {/* Numer i Data */}
-        <div className="grid grid-cols-2 gap-6 mb-8">
-          <div>
-            <label htmlFor="number" className="block text-gray-700 font-semibold mb-2">Numer faktury:</label>
             <input
               type="text"
-              name="number"
-              id="number"
-              value={formData.number}
+              name="recipient_name"
+              value={formData.recipient_name}
               onChange={handleChange}
-              required
-              className="w-full p-2 border border-gray-300 rounded"
+              placeholder="Imię i nazwisko"
+              className="text-sm text-gray-700 mt-2 w-full bg-transparent border-b border-gray-300 focus:outline-none focus:border-blue-400"
             />
-          </div>
-
-          <div>
-            <label htmlFor="issued_at" className="block text-gray-700 font-semibold mb-2">Data wystawienia:</label>
             <input
-              type="date"
-              name="issued_at"
-              id="issued_at"
-              value={formData.issued_at}
+              type="text"
+              name="recipient_address"
+              value={formData.recipient_address}
               onChange={handleChange}
-              required
-              className="w-full p-2 border border-gray-300 rounded"
+              placeholder="Adres"
+              className="text-sm text-gray-700 mt-2 w-full bg-transparent border-b border-gray-300 focus:outline-none focus:border-blue-400"
+            />
+            <input
+              type="text"
+              name="recipient_nip"
+              value={formData.recipient_nip}
+              onChange={handleChange}
+              placeholder="NIP"
+              className="text-sm text-gray-700 mt-2 w-full bg-transparent border-b border-gray-300 focus:outline-none focus:border-blue-400"
             />
           </div>
         </div>
 
-        {/* Produkty */}
         <table className="w-full text-sm text-left text-gray-700 mb-8 border-t border-b border-gray-300">
           <thead className="bg-gray-100">
             <tr>
-              <th className="py-3 px-4">Opis</th>
+              <th className="py-3 px-4">Lp</th>
+              <th className="py-3 px-4">Nazwa</th>
               <th className="py-3 px-4">Cena netto (zł)</th>
               <th className="py-3 px-4">Akcje</th>
             </tr>
@@ -162,16 +185,27 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
           <tbody>
             {formData.products.map((product, index) => (
               <tr key={index} className="border-t border-gray-200">
+                <td className="py-2 px-4">{index + 1}</td>
                 <td className="py-2 px-4">
-                  <input
-                    type="text"
+                  <select
                     name="description"
                     value={product.description}
                     onChange={(e) => handleChange(e, index)}
                     required
                     className="w-full p-2 border border-gray-300 rounded"
-                  />
+                  >
+                    <option value="">Wybierz przedmiot</option>
+                    {items.map((item) => (
+                      <option
+                        key={item.id}
+                        value={`${item.manufacturer} ${item.model}`}
+                      >
+                        {item.manufacturer} {item.model}
+                      </option>
+                    ))}
+                  </select>
                 </td>
+
                 <td className="py-2 px-4">
                   <input
                     type="number"
@@ -197,7 +231,6 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
           </tbody>
         </table>
 
-        {/* Dodaj produkt */}
         <button
           type="button"
           onClick={handleAddProduct}
@@ -206,7 +239,6 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
           ➕ Dodaj pozycję
         </button>
 
-        {/* Podsumowanie */}
         <div className="text-right mb-8">
           <p className="text-lg font-semibold">
             Do zapłaty:{" "}
@@ -214,17 +246,18 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
           </p>
         </div>
 
-        {/* Komunikat */}
         {message && <p className="text-center text-red-500 font-semibold mb-6">{message}</p>}
 
-        {/* Przycisk */}
+        <div className="text-left mb-8">
+          <p className="text-lg font-semibold">Przelew środków wykonać na konto:</p>
+        </div>
+
         <button
           type="submit"
           className="w-full py-3 bg-blue-500 text-white font-bold rounded hover:bg-blue-600 transition"
         >
           Utwórz fakturę
         </button>
-
       </form>
     </div>
   );
