@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -8,6 +9,17 @@ const Dashboard = () => {
     'user': ['Stan magazynowy', 'Zarządzanie stanem magazynowym', 'System przyjęć / wydań'],
     'manager': ['Stan magazynowy', 'Zarządzanie stanem magazynowym', 'System przyjęć / wydań', 'Zarządzanie pracownikami', 'Raporty', 'Faktury'],
     'auditor': ['Dokonaj audytu']
+=======
+import { useNavigate } from "react-router-dom";
+
+const Dashboard = () => {
+  const navigate = useNavigate();
+    const goToInvoices = () => {
+      navigate('/invoices');
+    };
+
+    return <div>Dashbaord<button onClick={goToInvoices}>Fakrury</button></div>;
+>>>>>>> ecd93b841f5b52a37481d0b8631a7e1c011051b1
   };
 
   const navigate = useNavigate();

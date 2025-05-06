@@ -1,8 +1,16 @@
+Funkcjonalność obsługiwania faktur
 
-# 🏬 System Zarządzania Hurtownią
+Aktorzy: 
+-pracownik 
+-manager
+-audytor
 
-**Gałąź:** `autentykacja_i_zarzadzanie_uzytkownikami`
+1.Dodawanie Faktór do systemu
+   1. Wybór użądzeń jakich ma dotyczyc faktóra 
+   2. Ustalenie ilości danych użadzeń
+   3. Wpisanie reszty danchy faktóry
 
+<<<<<<< HEAD
 Aplikacja webowa do zarządzania hurtownią z systemem autentykacji i zarządzania użytkownikami.
 
 ---
@@ -82,3 +90,8 @@ Hasła są takie same jak loginy do wszystkich użytkowników
 ## ✅ Gotowe!
 
 Jeśli wszystko poszło zgodnie z planem, aplikacja backendowa i frontendowa powinna działać lokalnie. Miłego korzystania! 🚀
+=======
+2.Wysiwetlanie Faktór w systemie + Eksport w formacie (?)
+   1. Wyswietlanie wszystkich faktór w systemie w formie tabeli
+   2. Morzliwosć wyboru eksportu dnej faktury
+>>>>>>> ecd93b841f5b52a37481d0b8631a7e1c011051b1
