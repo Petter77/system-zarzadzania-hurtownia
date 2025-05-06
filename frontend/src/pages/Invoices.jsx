@@ -1,42 +1,35 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import CreateInvoice from "../components/CreateInvoice";
+import InvoicePreview from "../components/InvoicePreview";
 
 const Invoices = () => {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+
+  const handleRowClick = async (number) => {
+    try {
+      const response = await axios.get(`http://localhost:3000/invoices/${encodeURIComponent(number)}`);
+      setSelectedInvoice(response.data);
+    } catch (error) {
+      console.error('Nie udało się pobrać szczegółów faktury:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchInvoices = async () => {
       try {
         const response = await axios.get('http://localhost:3000/invoices/all');
-
-        // grupowanie danych
-        const grouped = {};
-        response.data.forEach(item => {
-          if (!grouped[item.number]) {
-            grouped[item.number] = {
-              number: item.number,
-              issued_at: item.issued_at,
-              descriptions: [],
-              totalPrice: 0
-            };
-          }
-          grouped[item.number].descriptions.push(item.description);
-          grouped[item.number].totalPrice += item.price;
-        });
-
-        const groupedInvoices = Object.values(grouped);
-        setInvoices(groupedInvoices);
-
+        setInvoices(response.data);
       } catch (error) {
         console.error('Błąd podczas pobierania faktur:', error);
       } finally {
         setLoading(false);
       }
     };
-
+  
     fetchInvoices();
   }, []);
 
@@ -72,27 +65,31 @@ const Invoices = () => {
           <tr>
             <th className="px-4 py-2 border-b text-left">Numer faktury</th>
             <th className="px-4 py-2 border-b text-left">Data wystawienia</th>
-            <th className="px-4 py-2 border-b text-left">Opis</th>
-            <th className="px-4 py-2 border-b text-left">Suma</th>
+            <th className="px-4 py-2 border-b text-left">Nazwa nabywcy</th>
           </tr>
         </thead>
         <tbody>
-            {invoices.map((invoice, index) => (
-                <tr key={index}>
-                <td>{invoice.number}</td>
-                <td>{new Date(invoice.issued_at).toLocaleDateString()}</td>
-                <td>
-                    <ul className="list-disc pl-5">
-                    {invoice.descriptions.map((desc, idx) => (
-                        <li key={idx}>{desc}</li>
-                    ))}
-                    </ul>
-                </td>
-                <td>{invoice.totalPrice.toFixed(2)} zł</td>
-                </tr>
-            ))}
+          {invoices.map((invoice, index) => (
+            <tr
+              key={index}
+              onClick={() => handleRowClick(invoice.number)}
+              className="cursor-pointer hover:bg-gray-100 transition"
+            >
+              <td>{invoice.number}</td>
+              <td>{new Date(invoice.issued_at).toLocaleDateString()}</td>
+              <td>{invoice.recipient_name}</td>
+            </tr>
+          ))}
         </tbody>
+
       </table>
+      {selectedInvoice && (
+        <InvoicePreview
+          invoice={selectedInvoice}
+          onClose={() => setSelectedInvoice(null)}
+        />
+      )}
+
     </div>
   );
 };

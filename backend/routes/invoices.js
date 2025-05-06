@@ -3,17 +3,15 @@ const router = express.Router();
 const db = require('../db');
 
 
-// get all invoices with their grouped items
+// get all invoices
 router.get('/all', (req, res) => {
     const query = `
         SELECT 
             invoices.id,
             invoices.number, 
-            invoices.issued_at, 
-            invoice_items.description, 
-            invoice_items.price 
+            invoices.issued_at,
+            invoices.recipient_name
         FROM invoices 
-        INNER JOIN invoice_items ON invoices.id = invoice_items.invoice_id
         ORDER BY invoices.number;
     `;
 
@@ -23,22 +21,8 @@ router.get('/all', (req, res) => {
             return res.status(500).json({ error: 'Błąd serwera' });
         }
 
-        const groupedInvoices = {};
-
-        results.forEach(row => {
-            if (!groupedInvoices[row.number]) {
-                groupedInvoices[row.number] = {
-                    number: row.number,
-                    issued_at: row.issued_at,
-                    descriptions: [],
-                    totalPrice: 0
-                };
-            }
-            groupedInvoices[row.number].descriptions.push(row.description);
-            groupedInvoices[row.number].totalPrice += Number(row.price); // <-- ważne!
-        });
-
-        res.status(200).json(Object.values(groupedInvoices));
+        // Nie trzeba grupować, jeśli każdy rekord to jedna faktura
+        res.status(200).json(results);
     });
 });
 
@@ -119,6 +103,52 @@ router.get('/inventory-items', (req, res) => {
       res.json(items);
     });
   });
+
+
+// get invoices details
+router.get('/:number', (req, res) => {
+    const number = decodeURIComponent(req.params.number);
+  
+    const query = `
+      SELECT 
+        invoices.number, 
+        invoices.issued_at, 
+        invoices.recipient_name,
+        invoices.recipient_address,
+        invoices.recipient_nip,
+        invoice_items.description,
+        invoice_items.price
+      FROM invoices 
+      LEFT JOIN invoice_items ON invoices.id = invoice_items.invoice_id
+      WHERE invoices.number = ?
+    `;
+  
+    db.query(query, [number], (err, results) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Błąd serwera' });
+      }
+  
+      if (results.length === 0) {
+        return res.status(404).json({ error: 'Faktura nie znaleziona' });
+      }
+  
+      const invoice = {
+        number: results[0].number,
+        issued_at: results[0].issued_at,
+        recipient_name: results[0].recipient_name,
+        recipient_address: results[0].recipient_address,
+        recipient_nip: results[0].recipient_nip,
+        products: results.map(row => ({
+          description: row.description,
+          price: row.price
+        }))
+      };
+  
+      res.status(200).json(invoice);
+    });
+  });
+  
   
 
 module.exports = router;
