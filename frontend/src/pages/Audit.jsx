@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import UsersTab from '../components/audit/UsersTab';
 import ItemsTab from '../components/audit/ItemsTab';
+import In_out_operationsTab from '../components/audit/in_out_operationsTab';
 
 function Audit() {
   const [activeTab, setActiveTab] = useState('users');
@@ -24,10 +25,10 @@ function Audit() {
           Sprzęt
         </button>
         <button
-          onClick={() => setActiveTab('placeholder')}
-          className={`pb-2 ${activeTab === 'placeholder' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
+          onClick={() => setActiveTab('in_out_operationsTab')}
+          className={`pb-2 ${activeTab === 'in_out_operationsTab' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
         >
-          Placeholder
+          Wydania/Przyjęcia
         </button>
       </div>
 
@@ -35,7 +36,7 @@ function Audit() {
       <div>
         {activeTab === 'users' && <UsersTab key="users"/>}
         {activeTab === 'equipment' && <ItemsTab key="items" />}
-        {activeTab === 'placeholder' && <PlaceholderTab />}
+        {activeTab === 'in_out_operationsTab' && <In_out_operationsTab key="in_out_operationsTab" />}
       </div>
 
     </div>
@@ -43,8 +44,5 @@ function Audit() {
 }
 
 
-function PlaceholderTab() {
-  return <div>PlaceholderTab</div>;
-}
 
 export default Audit;
