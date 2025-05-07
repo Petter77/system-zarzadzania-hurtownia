@@ -8,9 +8,15 @@ const Dashboard = () => {
     'user': ['Stan magazynowy', 'Zarządzanie stanem magazynowym', 'System przyjęć / wydań'],
     'manager': ['Stan magazynowy', 'Zarządzanie stanem magazynowym', 'System przyjęć / wydań', 'Zarządzanie pracownikami', 'Raporty', 'Faktury'],
     'auditor': ['Dokonaj audytu']
-  };
+  }
 
   const navigate = useNavigate();
+  
+    const goToInvoices = () => {
+      navigate('/invoices');
+    };
+    
+
   const userToken = sessionStorage.getItem('user');
 
   const getUserData = async () => {
