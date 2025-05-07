@@ -55,7 +55,7 @@ return (
           <Route path="/manage-employees" element={<Navigate to="/dashboard" replace />} />
         )}
 
-{user && user.role === 'manager' && (
+        {user && user.role === 'manager' && (
           <Route path="/reports" element={<Reports userToken={userToken} />} />
         )}
 
