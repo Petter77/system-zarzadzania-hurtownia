@@ -4,6 +4,7 @@ import './index.css';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import ManageUsers from './pages/ManageUsers';
+import Reports from './pages/Reports';
 import { Routes, Route, Navigate } from "react-router";
 import Layout from "./Layout";
 
@@ -52,6 +53,14 @@ return (
 
         {user && user.role !== 'manager' && (
           <Route path="/manage-employees" element={<Navigate to="/dashboard" replace />} />
+        )}
+
+{user && user.role === 'manager' && (
+          <Route path="/reports" element={<Reports userToken={userToken} />} />
+        )}
+
+        {user && user.role !== 'manager' && (
+          <Route path="/reports" element={<Navigate to="/dashboard" replace />} />
         )}
       </Route>
     </Routes>
