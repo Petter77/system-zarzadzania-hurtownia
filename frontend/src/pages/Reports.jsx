@@ -37,7 +37,7 @@ const Reports = ({ userToken }) => {
         </button>
       </div>
       <hr className="border-t-2 border-gray-400 my-4" />
-      <div className="reports">
+      <div className="reports-module">
         {renderModule()}
       </div>
     </div>
