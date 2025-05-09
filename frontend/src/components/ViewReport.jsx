@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { jwtDecode } from 'jwt-decode';
 import ReportDetails from "../components/ReportDetails";
+import ExportReport from "../components/ExportReport";
 
 const ViewReport = ({ userToken }) => {
   const [reports, setReports] = useState([]);
   const [usernames, setUsernames] = useState({});
   const [loading, setLoading] = useState(true);
   const [isReportDetailsOpen, setIsReportDetailsOpen] = useState(false);
+  const [isReportExportOpen, setIsReportExportOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
 
   const decoded = jwtDecode(userToken);
@@ -100,7 +102,10 @@ const ViewReport = ({ userToken }) => {
                   </button>
                   <button
                     className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 mr-2"
-                    onClick={() => alert(`Eksportuj`)}
+                    onClick={() => {
+                      setSelectedReport({ id, title, created_by, created_at});
+                      setIsReportExportOpen(true);
+                    }}
                   >
                     Eksportuj
                   </button>
@@ -140,6 +145,17 @@ const ViewReport = ({ userToken }) => {
           </div>
         </div>
       </div>
+      )}
+      {isReportExportOpen && (
+        <ExportReport
+          userToken={userToken}
+          report={selectedReport}
+          usernames={usernames}
+          onClose={() => {
+            setIsReportExportOpen(false);
+            setSelectedReport(null);
+          }}
+        />
       )}
     </div>
   );
