@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import CreateReport from "../components/CreateReport";
 import ViewReport from "../components/ViewReport";
-import ExportReport from "../components/ExportReport";
-import ReportDetails from "../components/ReportDetails";
 
 const Reports = ({ userToken }) => {
   const [activeModule, setActiveModule] = useState("view");

@@ -118,6 +118,28 @@ router.post('/createReport', authorizeRoles('manager'), (req, res) => {
   });
 });
 
+// get report items
+router.get('/getReportItems/:reportId', authorizeRoles('manager'), (req, res) => {
+  const { reportId } = req.params;
+  const sql = `
+    SELECT 
+      ri.instance_id,
+      ii.serial_number,
+      ii.status,
+      ii.location,
+      inv.manufacturer,
+      inv.model
+    FROM report_items ri
+    JOIN item_instances ii ON ri.instance_id = ii.id
+    JOIN inventory_items inv ON ii.item_id = inv.id
+    WHERE ri.report_id = ?;
+  `;
+  db.query(sql, [reportId], (err, results) => {
+    if (err) return res.status(500).json({ error: 'Błąd serwera' });
+    res.status(200).json({ results });
+  });
+});
+
 
 module.exports = router;
 

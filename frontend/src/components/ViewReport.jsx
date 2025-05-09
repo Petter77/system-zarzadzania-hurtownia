@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { jwtDecode } from 'jwt-decode';
+import ReportDetails from "../components/ReportDetails";
 
 const ViewReport = ({ userToken }) => {
   const [reports, setReports] = useState([]);
   const [usernames, setUsernames] = useState({});
   const [loading, setLoading] = useState(true);
+  const [isReportDetailsOpen, setIsReportDetailsOpen] = useState(false);
+  const [selectedReport, setSelectedReport] = useState(null);
 
   const decoded = jwtDecode(userToken);
   //console.log("decoded token:", decoded);
@@ -88,7 +91,10 @@ const ViewReport = ({ userToken }) => {
                 <td className="px-4 py-2 border-b">
                   <button
                     className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 mr-2"
-                    onClick={() => alert(`Szczegóły`)}
+                    onClick={() => {
+                      setSelectedReport({ id, title, created_by, created_at});
+                      setIsReportDetailsOpen(true);
+                    }}
                   >
                     Szczegóły
                   </button>
@@ -101,10 +107,40 @@ const ViewReport = ({ userToken }) => {
                 </td>
               </tr>
             ))}
-        </tbody>
+          </tbody>
         </table>
       )}
-
+      {(isReportDetailsOpen) && (
+        <div
+        className="fixed inset-0 flex items-center justify-center bg-black/40 z-50"
+        onClick={() => {
+          setIsReportDetailsOpen(false);
+          setSelectedReport(null);
+        }}
+      >
+        <div
+          className="bg-gray-100 p-6 rounded-lg shadow-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto relative"
+          onClick={e => e.stopPropagation()}
+        >
+          <button
+            className="absolute top-2 right-2 text-gray-500 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 mr-2"
+            onClick={() => {
+              setIsReportDetailsOpen(false);
+              setSelectedReport(null);
+            }}
+          >
+            Zamknij
+          </button>
+          <div>
+            <ReportDetails 
+              userToken={userToken} 
+              report={selectedReport} 
+              usernames={usernames} 
+            />
+          </div>
+        </div>
+      </div>
+      )}
     </div>
   );
 };
