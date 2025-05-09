@@ -80,7 +80,11 @@ const CreateReport = ({ userToken }) => {
         setMessage("Raport został utworzony.");
       } catch (err) {
         console.log(err);
-        setMessage("Błąd podczas tworzenia raportu.");
+        if (err.response && err.response.status === 409) {
+          setMessage(err.response.data.error); // wyświetli "Raport o takiej nazwie już istnieje!"
+        } else {
+          setMessage("Błąd podczas tworzenia raportu.");
+        }
       }
     };
     createReport();
