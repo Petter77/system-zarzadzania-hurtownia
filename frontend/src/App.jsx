@@ -4,6 +4,7 @@ import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import Invoices from './pages/Invoices';
 import ManageUsers from './pages/ManageUsers';
+import InOutOperations from './pages/InOutOperations';
 import { Routes, Route, Navigate } from "react-router";
 import Layout from "./Layout";
 
@@ -27,6 +28,7 @@ function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/invoices" element={<Invoices />} />
+        <Route path="/Transactions" element={<InOutOperations />} />
         <Route path="/manageUsers" element={<ManageUsers />} />
       </Route>
       </Routes>
