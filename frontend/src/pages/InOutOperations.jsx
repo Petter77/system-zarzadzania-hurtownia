@@ -1,26 +1,43 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Borrow from "../components/Borrow";
+import Return from "../components/Return";
 
 const Transactions = () => {
   const [action, setAction] = useState('');
   const [isBorrowFormOpen, setIsBorrowFormOpen] = useState(false);
-  const [availableItems, setAvailableItems] = useState([]); 
+  const [isReturnFormOpen, setIsReturnFormOpen] = useState(false);
+  const [availableItems, setAvailableItems] = useState([]);
+  const [borrowedItems, setBorrowedItems] = useState([]); // <-- nowy state
 
   const handleClick = (type) => {
     setAction(type);
     console.log(`Action selected: ${type}`);
+
+    if (type === 'Return') {
+      setIsReturnFormOpen(true);
+    }
   };
 
-  
   useEffect(() => {
-    axios.get('http://localhost:3000/inout_operations/available')  
+    axios.get('http://localhost:3000/inout_operations/available')
       .then((response) => {
         console.log("Dostępne przedmioty:", response.data);
         setAvailableItems(response.data);
       })
       .catch((error) => {
-        console.error('Błąd przy pobieraniu danych:', error);
+        console.error('Błąd przy pobieraniu dostępnych przedmiotów:', error);
+      });
+  }, []);
+
+  useEffect(() => {
+    axios.get('http://localhost:3000/inout_operations/borrowed') // <-- nowe zapytanie
+      .then((response) => {
+        console.log("Wypożyczone przedmioty:", response.data);
+        setBorrowedItems(response.data);
+      })
+      .catch((error) => {
+        console.error('Błąd przy pobieraniu wypożyczonych przedmiotów:', error);
       });
   }, []);
 
@@ -62,7 +79,16 @@ const Transactions = () => {
         <Borrow
           setIsBorrowFormOpen={setIsBorrowFormOpen}
           handleBorrowInvoiceSuccess={(data) => console.log("Success:", data)}
-          availableItems={availableItems} // <-- przekazujemy dostępne przedmioty
+          availableItems={availableItems}
+        />
+      )}
+
+      {/* Return Modal */}
+      {isReturnFormOpen && (
+        <Return
+          setIsReturnFormOpen={setIsReturnFormOpen}
+          handleReturnInvoiceSuccess={(data) => console.log("Success:", data)}
+          borrowedItems={borrowedItems}
         />
       )}
     </div>

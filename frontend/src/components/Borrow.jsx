@@ -12,36 +12,29 @@ const Borrow = ({ setIsBorrowFormOpen, availableItems }) => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const selectedData = Object.entries(selectedItems)
-      .filter(([_, val]) => val !== undefined)
-      .map(([itemId, { quantity }]) => {
-        const item = availableItems.find((i) => i.id === parseInt(itemId));
-        return {
-          item_id: parseInt(itemId),
-          quantity,
-          item
-        };
-      });
+  // Pobieramy tylko id wybranych instancji
+  const selectedIds = Object.entries(selectedItems)
+    .filter(([_, val]) => val !== undefined)
+    .map(([itemId]) => parseInt(itemId));
 
-    try {
-      const response = await axios.post('http://localhost:3000/inout_operations/borrow', {
-        items: selectedData
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+  console.log('Wysyłane id:', selectedIds);
 
-      console.log('Wypożyczenia zapisane:', response.data);
-      alert('Wypożyczenie zapisane pomyślnie!');
-      setIsBorrowFormOpen(false);
-    } catch (error) {
-      console.error('Błąd przy wypożyczaniu:', error);
-      alert('Błąd przy wypożyczaniu urządzeń.');
-    }
-  };
+  try {
+    const response = await axios.post(
+      'http://localhost:3000/inout_operations/borrow',
+      { item_ids: selectedIds }  // Wysyłamy tylko tablicę id
+    );
+
+    console.log('Wypożyczenia zapisane:', response.data);
+    alert('Wypożyczenie zapisane pomyślnie!');
+    setIsBorrowFormOpen(false);
+  } catch (error) {
+    console.error('Błąd przy wypożyczaniu:', error);
+    alert('Błąd przy wypożyczaniu urządzeń.');
+  }
+};
 
   return (
     <div className="fixed inset-0 bg-gray-100 bg-opacity-80 flex justify-center items-center z-50 p-8">
