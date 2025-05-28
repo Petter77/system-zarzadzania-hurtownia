@@ -1,9 +1,9 @@
 import express from 'express';
-import { performOperation } from '../controllers/operationController.js';
-import { authenticate } from '../middlewares/auth.js';
+import { performOperation, getOperations } from '../controllers/operationController.js';
 
 const router = express.Router();
 
-router.post('/operation', authenticate, performOperation);
+router.post('/operation', performOperation); 
+router.get('/operations', getOperations);    
 
 export default router;

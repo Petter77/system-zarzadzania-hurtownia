@@ -1,12 +1,5 @@
 import React from 'react';
+import InventoryList from '../components/InventoryList';
 
-function Home() {
-  return (
-    <div>
-      <h1>Welcome to the Warehouse Management System</h1>
-      <p>Use the navigation bar to manage operations.</p>
-    </div>
-  );
-}
-
+const Home = () => <InventoryList />;
 export default Home;

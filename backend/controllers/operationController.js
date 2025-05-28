@@ -2,7 +2,8 @@ import { InOutOperation, ItemInstance, AuditInOutOperation } from '../models/ind
 
 export const performOperation = async (req, res) => {
   const { instance_id, type, quantity = 1, remarks = '' } = req.body;
-  const userId = req.user.id;
+
+  const userId = req.user?.id || null;
 
   try {
     const instance = await ItemInstance.findByPk(instance_id);
@@ -43,6 +44,16 @@ export const performOperation = async (req, res) => {
     });
 
     res.json({ message: 'Operation completed successfully', operation });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const getOperations = async (req, res) => {
+  try {
+    const operations = await InOutOperation.findAll();
+    res.json(operations);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Internal server error' });

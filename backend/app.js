@@ -1,20 +1,21 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import cors from 'cors';
 import sequelize from './config/db.js';
 import operationRoutes from './routes/operations.js';
 import inventoryRoutes from './routes/inventory.js';
 
-
-
 dotenv.config();
-const app = express();
+
+const app = express(); 
+
+app.use(cors()); 
 app.use(express.json());
 
 app.use('/api', operationRoutes);
 app.use('/api/inventory', inventoryRoutes);
 
-
-sequelize.sync({ alter: true }) // Synchronizuje modele z bazą danych
+sequelize.sync({ alter: true })
   .then(() => console.log('Database synchronized'))
   .catch(err => console.error('Error synchronizing database:', err));
 

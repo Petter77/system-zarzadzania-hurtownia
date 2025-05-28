@@ -1,9 +1,8 @@
-import { Op } from 'sequelize'; // Import operatorów Sequelize
+import { Op } from 'sequelize'; 
 import { InventoryItem } from '../models/index.js';
 
-// Pobierz listę produktów z opcjami wyszukiwania i sortowania
 export const getItems = async (req, res) => {
-  const { search, sortBy = 'id', order = 'ASC' } = req.query; // Pobierz parametry zapytania
+  const { search, sortBy = 'id', order = 'ASC' } = req.query; 
   try {
     const where = search
       ? {
