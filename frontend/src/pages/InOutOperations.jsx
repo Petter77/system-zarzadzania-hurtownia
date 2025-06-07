@@ -2,13 +2,16 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Borrow from "../components/Borrow";
 import Return from "../components/Return";
+import ToService from "../components/ToService";
+// import FromService from "../components/FromService";
 
 const Transactions = () => {
   const [action, setAction] = useState('');
   const [isBorrowFormOpen, setIsBorrowFormOpen] = useState(false);
   const [isReturnFormOpen, setIsReturnFormOpen] = useState(false);
   const [availableItems, setAvailableItems] = useState([]);
-  const [borrowedItems, setBorrowedItems] = useState([]); // <-- nowy state
+  const [borrowedItems, setBorrowedItems] = useState([]);
+  const [damagedItems, setDamagedItems] = useState([]); 
 
   const handleClick = (type) => {
     setAction(type);
@@ -31,7 +34,7 @@ const Transactions = () => {
   }, []);
 
   useEffect(() => {
-    axios.get('http://localhost:3000/inout_operations/borrowed') // <-- nowe zapytanie
+    axios.get('http://localhost:3000/inout_operations/borrowed') 
       .then((response) => {
         console.log("Wypożyczone przedmioty:", response.data);
         setBorrowedItems(response.data);
@@ -41,34 +44,52 @@ const Transactions = () => {
       });
   }, []);
 
+  useEffect(() => {
+    axios.get('http://localhost:3000/inout_operations/damaged') 
+      .then((response) => {
+        console.log("Przedmioty w naprawie:", response.data);
+        setDamagedItems(response.data); 
+      })
+      .catch((error) => {
+        console.error('Błąd przy pobieraniu przedmiotów w naprawie:', error);
+      });
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
       <h1 className="text-4xl font-bold mb-8">Transactions</h1>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="w-full max-w-xl grid grid-cols-1 sm:grid-cols-2 gap-6">
         <button
           onClick={() => handleClick('IN')}
-          className="px-6 py-3 bg-green-500 text-white rounded-xl shadow hover:bg-green-600 transition"
+          className="flex flex-col items-center justify-center p-5 bg-gradient-to-r from-green-400 to-green-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition transform hover:scale-105"
         >
-          IN
+          <span className="text-xl font-semibold">To Service</span>
+          <span className="text-sm opacity-80">Item Damage</span>
         </button>
+
         <button
           onClick={() => handleClick('OUT')}
-          className="px-6 py-3 bg-red-500 text-white rounded-xl shadow hover:bg-red-600 transition"
+          className="flex flex-col items-center justify-center p-5 bg-gradient-to-r from-red-400 to-red-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition transform hover:scale-105"
         >
-          OUT
+          <span className="text-xl font-semibold">Return from Service</span>
+          <span className="text-sm opacity-80">Back from damaged</span>
         </button>
+
         <button
           onClick={() => setIsBorrowFormOpen(true)}
-          className="px-6 py-3 bg-blue-500 text-white rounded-xl shadow hover:bg-blue-600 transition"
+          className="flex flex-col items-center justify-center p-5 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition transform hover:scale-105"
         >
-          Borrow
+          <span className="text-xl font-semibold">Borrow</span>
+          <span className="text-sm opacity-80">Get an item</span>
         </button>
+
         <button
           onClick={() => handleClick('Return')}
-          className="px-6 py-3 bg-yellow-500 text-white rounded-xl shadow hover:bg-yellow-600 transition"
+          className="flex flex-col items-center justify-center p-5 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition transform hover:scale-105"
         >
-          Return
+          <span className="text-xl font-semibold">Return</span>
+          <span className="text-sm opacity-80">Give back borrowed</span>
         </button>
       </div>
 
@@ -91,6 +112,27 @@ const Transactions = () => {
           borrowedItems={borrowedItems}
         />
       )}
+
+      {/* To Service */}
+      {action === 'IN' && (
+        <ToService
+          setAction={setAction}
+          availableItems={availableItems}
+          handleToServiceSuccess={(data) => console.log("ToService success:", data)}
+        />
+      )}
+
+      {/* Return from Service - opcjonalnie, jeśli masz odpowiedni komponent */}
+       
+      {action === 'OUT' && (
+        <FromService
+          setAction={setAction}
+          itemsInService={damagedItems}
+          handleFromServiceSuccess={(data) => console.log("FromService success:", data)}
+        />
+      )} 
+      
+
     </div>
   );
 };
