@@ -5,7 +5,7 @@ const db = require('../db');
 // POST /inout_operations/borrow
 router.post('/borrow', (req, res) => {
     console.log('Otrzymane item_ids:', req.body.item_ids);
-  const { item_ids } = req.body; // teraz tylko [123, 456, ...]
+  const { item_ids } = req.body; 
 
   if (!Array.isArray(item_ids) || item_ids.length === 0) {
     return res.status(400).json({ error: 'Brak danych do zapisania' });
@@ -88,5 +88,33 @@ router.get('/borrowed', (req, res) => {
     return res.status(200).json(results);
   });
 });
+
+// GET /inout_operations/damaged
+router.get('/damaged', (req, res) => {
+  const query = `
+    SELECT 
+      ii.*, 
+      inv.manufacturer, 
+      inv.model, 
+      inv.description
+    FROM 
+      item_instances AS ii
+    JOIN 
+      inventory_items AS inv ON ii.item_id = inv.id
+    WHERE 
+      ii.status = 'damaged'
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Błąd podczas pobierania dostępnych przedmiotów:', err);
+      return res.status(500).json({ error: 'Błąd serwera' });
+    }
+
+    return res.status(200).json(results);
+  });
+});
+
+
 
 module.exports = router;
