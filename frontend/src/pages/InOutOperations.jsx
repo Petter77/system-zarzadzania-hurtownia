@@ -3,7 +3,7 @@ import axios from 'axios';
 import Borrow from "../components/Borrow";
 import Return from "../components/Return";
 import ToService from "../components/ToService";
-// import FromService from "../components/FromService";
+import FromService from "../components/FromService";
 
 const Transactions = () => {
   const [action, setAction] = useState('');
