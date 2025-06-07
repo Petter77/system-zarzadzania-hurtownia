@@ -77,7 +77,7 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
         recipient_nip: "",
         products: [{ description: "", price: "" }],
       });
-      handleCreateInvoiceSuccess();
+      //handleCreateInvoiceSuccess();
     } catch (err) {
       console.error(err);
       //setMessage("Błąd podczas tworzenia faktury.");
