@@ -75,7 +75,7 @@ router.post('/createReport', authorizeRoles('manager'), (req, res) => {
 
     // jeżeli nie, idź dalej
     db.query(
-      "INSERT INTO `reports` (`title`, `created_by`, `created_at`) VALUES (?, ?, current_timestamp())",
+      "INSERT INTO `reports` (`title`, `created_by`, `created_at`, `type`) VALUES (?, ?, current_timestamp(), 0)",
       [reportName, userId],
       (err, reportResult) => {
         if (err) return res.sendStatus(500);
