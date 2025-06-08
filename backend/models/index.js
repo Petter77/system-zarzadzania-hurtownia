@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> 9bedf9316420435ae0d19759be3edebef91cdac0
 import sequelize from '../config/db.js';
 import { DataTypes } from 'sequelize';
 
@@ -83,4 +86,8 @@ export const ReportItem = sequelize.define('report_items', {
   report_id: DataTypes.INTEGER,
   instance_id: DataTypes.INTEGER,
   remarks: DataTypes.TEXT,
+<<<<<<< HEAD
 }, { timestamps: false });
+=======
+}, { timestamps: false });
+>>>>>>> 9bedf9316420435ae0d19759be3edebef91cdac0

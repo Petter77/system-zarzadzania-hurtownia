@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> 9bedf9316420435ae0d19759be3edebef91cdac0
 import React, { useState, useEffect } from 'react';
 
 const InventoryForm = ({ onSubmit, initialData }) => {

@@ -24,4 +24,8 @@ sequelize.authenticate().then(() => {
   app.listen(3000, () => console.log('Server running on port 3000'));
 }).catch(err => {
   console.error('Unable to connect to DB:', err);
+<<<<<<< HEAD
 });
+=======
+});
+>>>>>>> 9bedf9316420435ae0d19759be3edebef91cdac0

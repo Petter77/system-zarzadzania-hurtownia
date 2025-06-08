@@ -23,4 +23,8 @@ const EditItem = () => {
   return item ? <InventoryForm onSubmit={handleSubmit} initialData={item} /> : <div>Loading...</div>;
 };
 
+<<<<<<< HEAD
 export default EditItem;
+=======
+export default EditItem;
+>>>>>>> 9bedf9316420435ae0d19759be3edebef91cdac0

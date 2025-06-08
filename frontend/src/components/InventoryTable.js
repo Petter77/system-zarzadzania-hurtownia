@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> 9bedf9316420435ae0d19759be3edebef91cdac0
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
@@ -200,4 +203,8 @@ function InventoryTable() {
   );
 }
 
+<<<<<<< HEAD
 export default InventoryTable;
+=======
+export default InventoryTable;
+>>>>>>> 9bedf9316420435ae0d19759be3edebef91cdac0

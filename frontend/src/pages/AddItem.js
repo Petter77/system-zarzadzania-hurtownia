@@ -14,4 +14,8 @@ const AddItem = () => {
   return <InventoryForm onSubmit={handleSubmit} />;
 };
 
+<<<<<<< HEAD
 export default AddItem;
+=======
+export default AddItem;
+>>>>>>> 9bedf9316420435ae0d19759be3edebef91cdac0
