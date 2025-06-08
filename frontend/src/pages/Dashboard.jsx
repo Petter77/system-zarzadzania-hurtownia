@@ -40,7 +40,7 @@ const Dashboard = () => {
         route = '/inventory';
         break;
       case 'Zarządzanie stanem magazynowym':
-        route = '/manage-inventory';
+        route = '/manageInventory';
         break;
       case 'System przyjęć / wydań':
         route = '/transactions';
