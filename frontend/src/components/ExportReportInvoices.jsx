@@ -49,7 +49,9 @@ const ExportInvoicesReport = ({ userToken, report, usernames, onClose }) => {
           boxShadow: "0 2px 16px rgba(0,0,0,0.12)",
           maxWidth: 600,
           width: "100%",
-          position: "relative"
+          position: "relative",
+          maxHeight: "65vh",
+          overflow: "auto"
         }}
         onClick={e => e.stopPropagation()}
       >
