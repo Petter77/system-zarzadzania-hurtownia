@@ -31,7 +31,7 @@ router.post('/borrow', (req, res) => {
 
     const updateQuery = `
       UPDATE item_instances
-      SET status = 'damaged'
+      SET status = 'borrowed'
       WHERE id IN (${item_ids.map(() => '?').join(',')})
     `;
 
