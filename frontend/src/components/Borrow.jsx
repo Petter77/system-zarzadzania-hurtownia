@@ -19,9 +19,12 @@ const Borrow = ({ setIsBorrowFormOpen, availableItems }) => {
     .filter(([_, val]) => val !== undefined)
     .map(([itemId]) => parseInt(itemId));
 
-  console.log('Wysyłane id:', selectedIds);
+  //console.log('Wysyłane id:', selectedIds);
 
   try {
+    console.log('Wysyłane ID (typeof):', selectedIds.map(id => [id, typeof id]));
+
+
     const response = await axios.post(
       'http://localhost:3000/inout_operations/borrow',
       { item_ids: selectedIds }  //  tylko tablica id

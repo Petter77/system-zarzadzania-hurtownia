@@ -4,37 +4,101 @@ const db = require('../db');
 
 // POST /inout_operations/borrow
 router.post('/borrow', (req, res) => {
-    console.log('Otrzymane item_ids:', req.body.item_ids);
-  const { item_ids } = req.body; 
+  console.log('REQ BODY CAŁY:', req.body);
+  const { item_ids } = req.body;
 
   if (!Array.isArray(item_ids) || item_ids.length === 0) {
     return res.status(400).json({ error: 'Brak danych do zapisania' });
   }
 
   const values = item_ids.map((instanceId) => [
-    instanceId,           // instance_id
-    'borrow',             // type
-    new Date(),           // timestamp
-    1                     // quantity na sztywno
+    instanceId,
+    'borrow',
+    new Date(),
+    1
   ]);
 
-  const query = `
-    INSERT INTO inout_operations (instance_id, type, timestamp, quantity)
+  const insertQuery = `
+    INSERT INTO in_out_operations (instance_id, type, timestamp, quantity)
     VALUES ?
   `;
 
-  db.query(query, [values], (err, result) => {
-    if (err) {
-      console.error('Błąd zapisu do bazy:', err);
-      return res.status(500).json({ error: 'Błąd serwera' });
+  db.query(insertQuery, [values], (insertErr, insertResult) => {
+    if (insertErr) {
+      console.error(' Błąd zapisu do bazy:', insertErr);
+      return res.status(500).json({ error: 'Błąd serwera przy zapisie wypożyczenia' });
     }
 
-    return res.status(201).json({
-      message: 'Wypożyczenie zapisane',
-      inserted: result.affectedRows
+    const updateQuery = `
+      UPDATE item_instances
+      SET status = 'damaged'
+      WHERE id IN (${item_ids.map(() => '?').join(',')})
+    `;
+
+    db.query(updateQuery, item_ids, (updateErr, updateResult) => {
+      if (updateErr) {
+        console.error(' Błąd aktualizacji statusu:', updateErr);
+        return res.status(500).json({ error: 'Błąd przy aktualizacji statusu urządzeń' });
+      }
+
+      return res.status(201).json({
+        message: 'Wypożyczenie zapisane, statusy zmienione na "damaged"',
+        inserted: insertResult.affectedRows,
+        updated: updateResult.affectedRows
+      });
     });
   });
 });
+
+
+// POST /inout_operations/return
+router.post('/return', (req, res) => {
+  console.log('REQ BODY CAŁY:', req.body);
+  const { item_ids } = req.body;
+
+  if (!Array.isArray(item_ids) || item_ids.length === 0) {
+    return res.status(400).json({ error: 'Brak danych do zapisania' });
+  }
+
+  const values = item_ids.map((instanceId) => [
+    instanceId,
+    'return',
+    new Date(),
+    1
+  ]);
+
+  const insertQuery = `
+    INSERT INTO in_out_operations (instance_id, type, timestamp, quantity)
+    VALUES ?
+  `;
+
+  db.query(insertQuery, [values], (insertErr, insertResult) => {
+    if (insertErr) {
+      console.error('Błąd zapisu do inout_operations:', insertErr);
+      return res.status(500).json({ error: 'Błąd przy zapisie zwrotu' });
+    }
+
+    const updateQuery = `
+      UPDATE item_instances
+      SET status = 'available'
+      WHERE id IN (?)
+    `;
+
+    db.query(updateQuery, [item_ids], (updateErr, updateResult) => {
+      if (updateErr) {
+        console.error('Błąd przy aktualizacji statusu:', updateErr);
+        return res.status(500).json({ error: 'Błąd przy aktualizacji statusu urządzeń' });
+      }
+
+      return res.status(201).json({
+        message: 'Zwrot zapisany i statusy zaktualizowane',
+        inserted: insertResult.affectedRows,
+        updated: updateResult.affectedRows
+      });
+    });
+  });
+});
+
 
 
 // GET /inout_operations/available
