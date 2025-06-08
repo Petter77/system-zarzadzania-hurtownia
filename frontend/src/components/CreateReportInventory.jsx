@@ -92,7 +92,7 @@ const CreateReport = ({ userToken }) => {
 
   return (
     <div className="container mx-auto p-6">
-      <h2 className="text-3xl font-semibold mb-6">Utwórz raport</h2>
+      <h2 className="text-3xl font-semibold mb-6">Utwórz raport: stan magazynu</h2>
       <form className="max-w-xl p-6 bg-white shadow-lg rounded-lg" onSubmit={handleSubmit}>
         {message && <p className="text-red-500 text-center font-semibold mb-4">{message}</p>}
         <div className="mb-4">

@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { jwtDecode } from 'jwt-decode';
-import ReportDetails from "../components/ReportDetails";
-import ExportReport from "../components/ExportReport";
+import ReportDetails from "./ReportDetails";
+import ExportReport from "./ExportReport";
 
 const ViewReport = ({ userToken }) => {
   const [reports, setReports] = useState([]);
@@ -19,7 +19,7 @@ const ViewReport = ({ userToken }) => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await axios.get("http://localhost:3000/reports/getReports", {
+        const res = await axios.get("http://localhost:3000/reports/getReportsInventory", {
           headers: {
             Authorization: `Bearer ${userToken}`,
             "Content-Type": "application/json",
@@ -69,7 +69,7 @@ const ViewReport = ({ userToken }) => {
 
   return (
     <div className="container mx-auto p-6">
-      <h2 className="text-3xl font-semibold mb-6">Dostępne raporty</h2>
+      <h2 className="text-3xl font-semibold mb-6">Dostępne raporty: stan magazynowy</h2>
       {!reports ? (
         <p className="text-center text-gray-500">Brak dostępnych raportów</p>
       ) : (
