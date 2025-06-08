@@ -24,7 +24,7 @@ const Borrow = ({ setIsBorrowFormOpen, availableItems }) => {
   try {
     const response = await axios.post(
       'http://localhost:3000/inout_operations/borrow',
-      { item_ids: selectedIds }  // Wysyłamy tylko tablicę id
+      { item_ids: selectedIds }  //  tylko tablica id
     );
 
     console.log('Wypożyczenia zapisane:', response.data);
@@ -55,6 +55,7 @@ const Borrow = ({ setIsBorrowFormOpen, availableItems }) => {
                 <th className="px-4 py-2">Zaznacz</th>
                 <th className="px-4 py-2">Producent</th>
                 <th className="px-4 py-2">Model</th>
+                <th className="px-4 py-2">Numer Seryjny</th>
                 <th className="px-4 py-2">Opis</th>
               </tr>
             </thead>
@@ -70,6 +71,7 @@ const Borrow = ({ setIsBorrowFormOpen, availableItems }) => {
                   </td>
                   <td className="px-4 py-2">{item.manufacturer}</td>
                   <td className="px-4 py-2">{item.model}</td>
+                  <td className="px-4 py-2">{item.serial_number}</td>
                   <td className="px-4 py-2">{item.description}</td>
                 </tr>
               ))}

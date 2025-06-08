@@ -65,6 +65,7 @@ const Return = ({ setIsReturnFormOpen, handleReturnInvoiceSuccess, borrowedItems
                 <th className="px-4 py-2">Zaznacz</th>
                 <th className="px-4 py-2">Producent</th>
                 <th className="px-4 py-2">Model</th>
+                <th className="px-4 py-2">Numer Seryjny</th>
                 <th className="px-4 py-2">Opis</th>
               </tr>
             </thead>
@@ -81,6 +82,7 @@ const Return = ({ setIsReturnFormOpen, handleReturnInvoiceSuccess, borrowedItems
                     </td>
                     <td className="px-4 py-2">{item.manufacturer}</td>
                     <td className="px-4 py-2">{item.model}</td>
+                    <td className="px-4 py-2">{item.serial_number}</td>
                     <td className="px-4 py-2">{item.description}</td>
                   </tr>
                 ))

@@ -44,7 +44,8 @@ router.get('/available', (req, res) => {
       ii.*, 
       inv.manufacturer, 
       inv.model, 
-      inv.description
+      inv.description,
+      ii.serial_number
     FROM 
       item_instances AS ii
     JOIN 
@@ -70,7 +71,8 @@ router.get('/borrowed', (req, res) => {
       ii.*, 
       inv.manufacturer, 
       inv.model, 
-      inv.description
+      inv.description,
+      ii.serial_number
     FROM 
       item_instances AS ii
     JOIN 
@@ -96,7 +98,8 @@ router.get('/damaged', (req, res) => {
       ii.*, 
       inv.manufacturer, 
       inv.model, 
-      inv.description
+      inv.description,
+      ii.serial_number
     FROM 
       item_instances AS ii
     JOIN 

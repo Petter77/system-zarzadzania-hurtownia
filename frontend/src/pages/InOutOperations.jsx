@@ -57,43 +57,43 @@ const Transactions = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
-      <h1 className="text-4xl font-bold mb-8">Transactions</h1>
+      <h1 className="text-4xl font-bold mb-8">Status urządzeń</h1>
 
       <div className="w-full max-w-xl grid grid-cols-1 sm:grid-cols-2 gap-6">
         <button
           onClick={() => handleClick('IN')}
           className="flex flex-col items-center justify-center p-5 bg-gradient-to-r from-green-400 to-green-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition transform hover:scale-105"
         >
-          <span className="text-xl font-semibold">To Service</span>
-          <span className="text-sm opacity-80">Item Damage</span>
+          <span className="text-xl font-semibold">Dodaj do serwisu</span>
+          <span className="text-sm opacity-80">Naprawa</span>
         </button>
 
         <button
           onClick={() => handleClick('OUT')}
           className="flex flex-col items-center justify-center p-5 bg-gradient-to-r from-red-400 to-red-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition transform hover:scale-105"
         >
-          <span className="text-xl font-semibold">Return from Service</span>
-          <span className="text-sm opacity-80">Back from damaged</span>
+          <span className="text-xl font-semibold">Zwrot z serwisu</span>
+          <span className="text-sm opacity-80">Naprawione</span>
         </button>
 
         <button
           onClick={() => setIsBorrowFormOpen(true)}
           className="flex flex-col items-center justify-center p-5 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition transform hover:scale-105"
         >
-          <span className="text-xl font-semibold">Borrow</span>
-          <span className="text-sm opacity-80">Get an item</span>
+          <span className="text-xl font-semibold">Wypożycz użądzenie</span>
+          <span className="text-sm opacity-80"></span>
         </button>
 
         <button
           onClick={() => handleClick('Return')}
           className="flex flex-col items-center justify-center p-5 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition transform hover:scale-105"
         >
-          <span className="text-xl font-semibold">Return</span>
-          <span className="text-sm opacity-80">Give back borrowed</span>
+          <span className="text-xl font-semibold">Zwrot z wypozyczenia</span>
+          <span className="text-sm opacity-80"></span>
         </button>
       </div>
 
-      {action && <p className="mt-6 text-lg">You selected: <strong>{action}</strong></p>}
+      {/*action && <p className="mt-6 text-lg">You selected: <strong>{action}</strong></p>*/}
 
       {/* Borrow Modal */}
       {isBorrowFormOpen && (
