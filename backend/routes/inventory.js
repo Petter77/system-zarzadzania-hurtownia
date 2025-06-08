@@ -11,9 +11,9 @@ router.get('/stock', (req, res) => {
       ii.location AS instance_location,
       inv.id AS item_id,
       inv.manufacturer,
+      inv.device_type,
       inv.model,
-      inv.description,
-      inv.location AS item_location
+      inv.description
     FROM item_instances ii
     JOIN inventory_items inv ON ii.item_id = inv.id
     ORDER BY inv.manufacturer, inv.model, ii.serial_number
@@ -28,9 +28,9 @@ router.get('/stock', (req, res) => {
       if (!grouped[key]) {
         grouped[key] = {
           manufacturer: row.manufacturer,
+          device_type: row.device_type,
           model: row.model,
           description: row.description,
-          item_location: row.item_location,
           instances: [],
         };
       }
@@ -51,45 +51,69 @@ router.get('/stock', (req, res) => {
 });
 
 router.post('/add-item', (req, res) => {
-  const { manufacturer, model, description, code, location } = req.body;
-  const sql = `
-    INSERT INTO inventory_items (manufacturer, model, description, code, location)
-    VALUES (?, ?, ?, ?, ?)
+  const { manufacturer, device_type, model, description } = req.body;
+  const selectSql = `
+    SELECT id FROM inventory_items
+    WHERE manufacturer = ? AND device_type = ? AND model = ? AND description = ?
+    LIMIT 1
   `;
-  db.query(sql, [manufacturer, model, description, code, location], (err, result) => {
-    if (err) return res.status(500).json({ error: 'Błąd serwera przy dodawaniu sprzętu.' });
-    res.json({ itemId: result.insertId });
+  db.query(selectSql, [manufacturer, device_type, model, description], (err, results) => {
+    if (err) return res.status(500).json({ error: 'Błąd serwera przy sprawdzaniu sprzętu.' });
+    if (results.length > 0) {
+      return res.json({ itemId: results[0].id });
+    }
+    const insertSql = `
+      INSERT INTO inventory_items (manufacturer, device_type, model, description)
+      VALUES (?, ?, ?, ?)
+    `;
+    db.query(insertSql, [manufacturer, device_type, model, description], (err, result) => {
+      if (err) return res.status(500).json({ error: 'Błąd serwera przy dodawaniu sprzętu.' });
+      res.json({ itemId: result.insertId });
+    });
   });
 });
 
 router.post('/add-instances', (req, res) => {
   const { item_id, serialNumbers, location } = req.body;
-  if (!item_id) return res.status(400).json({ error: 'Brak item_id.' });
-
-  const serials = (serialNumbers || []).map(s => s.trim()).filter(s => s !== "");
-  if (serials.length !== new Set(serials).size) {
-    return res.status(400).json({ error: "Numery seryjne muszą być unikalne." });
+  if (!item_id || !serialNumbers || !Array.isArray(serialNumbers) || serialNumbers.length === 0) {
+    return res.status(400).json({ error: "Brak wymaganych danych." });
   }
 
-  const values = serials.map(serial =>
-    [item_id, serial, 'available', location || null]
-  );
+  const checkSql = `
+    SELECT serial_number FROM item_instances
+    WHERE serial_number IN (${serialNumbers.map(() => '?').join(',')})
+  `;
+  db.query(checkSql, serialNumbers, (err, results) => {
+    if (err) return res.status(500).json({ error: "Błąd serwera przy sprawdzaniu numerów seryjnych." });
+    if (results.length > 0) {
+      const existing = results.map(r => r.serial_number).join(', ');
+      return res.status(400).json({ error: `Numery seryjne już istnieją: ${existing}` });
+    }
 
-  if (values.length === 0) {
-    return res.status(400).json({ error: "Musisz podać przynajmniej jeden numer seryjny." });
+    const values = serialNumbers.map(sn => [item_id, sn, location || null]);
+    const insertSql = `
+      INSERT INTO item_instances (item_id, serial_number, location)
+      VALUES ?
+    `;
+    db.query(insertSql, [values], (err, result) => {
+      if (err) return res.status(500).json({ error: "Błąd serwera przy dodawaniu instancji." });
+      res.json({ success: true, added: result.affectedRows });
+    });
+  });
+});
+
+router.get('/description', (req, res) => {
+  const { manufacturer, device_type, model } = req.query;
+  if (!manufacturer || !device_type || !model) {
+    return res.status(400).json({ error: "Brak wymaganych parametrów." });
   }
-
   db.query(
-    "INSERT INTO item_instances (item_id, serial_number, status, location) VALUES ?",
-    [values],
-    (err) => {
-      if (err) {
-        if (err.code === "ER_DUP_ENTRY") {
-          return res.status(400).json({ error: "Podany numer seryjny już istnieje w bazie." });
-        }
-        return res.status(500).json({ error: 'Błąd serwera przy dodawaniu instancji.' });
-      }
-      res.json({ message: 'Instancje dodane.' });
+    "SELECT description FROM inventory_items WHERE manufacturer = ? AND device_type = ? AND model = ? LIMIT 1",
+    [manufacturer, device_type, model],
+    (err, results) => {
+      if (err) return res.status(500).json({ error: "Błąd serwera." });
+      if (results.length === 0) return res.json({});
+      res.json({ description: results[0].description });
     }
   );
 });

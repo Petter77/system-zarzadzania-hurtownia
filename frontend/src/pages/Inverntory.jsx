@@ -20,6 +20,7 @@ const Inventory = () => {
   const [expanded, setExpanded] = useState({});
   const [filters, setFilters] = useState({
     manufacturer: "",
+    device_type: "",
     model: "",
     status: "",
     location: "",
@@ -58,6 +59,7 @@ const Inventory = () => {
   const filteredStock = stock
     .filter(item =>
       (!filters.manufacturer || item.manufacturer?.toLowerCase().startsWith(filters.manufacturer.toLowerCase())) &&
+      (!filters.device_type || item.device_type?.toLowerCase() === filters.device_type.toLowerCase()) &&
       (!filters.model || item.model?.toLowerCase().startsWith(filters.model.toLowerCase()))
     )
     .map(item => ({
@@ -109,6 +111,20 @@ const Inventory = () => {
               placeholder="np. Cisco"
               autoComplete="off"
             />
+          </div>
+          <div className="mb-3">
+            <label className="block text-sm font-medium mb-1">Typ urządzenia</label>
+            <select
+              name="device_type"
+              value={filters.device_type}
+              onChange={handleFilterChange}
+              className="w-full border rounded px-2 py-1"
+            >
+              <option value="">Wszystkie</option>
+              <option value="switch">Switch</option>
+              <option value="router">Router</option>
+              <option value="access point">Access Point</option>
+            </select>
           </div>
           <div className="mb-3">
             <label className="block text-sm font-medium mb-1">Model</label>
@@ -169,6 +185,7 @@ const Inventory = () => {
           <thead>
             <tr>
               <th className="px-4 py-2 border-b">Producent</th>
+              <th className="px-4 py-2 border-b">Typ</th>
               <th className="px-4 py-2 border-b">Model</th>
               <th className="px-4 py-2 border-b">Ilość</th>
               <th className="px-4 py-2 border-b"></th>
@@ -181,6 +198,11 @@ const Inventory = () => {
                   <td className="px-4 py-2 border-b">
                     {item.manufacturer ?? (
                       <span className="bg-gray-300 text-gray-700 px-2 py-1 rounded text-xs font-semibold">Brak producenta</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2 border-b">
+                    {item.device_type ?? (
+                      <span className="bg-gray-300 text-gray-700 px-2 py-1 rounded text-xs font-semibold">Brak typu</span>
                     )}
                   </td>
                   <td className="px-4 py-2 border-b">
@@ -201,7 +223,7 @@ const Inventory = () => {
                 </tr>
                 {expanded[idx] && (
                   <tr>
-                    <td colSpan={4} className="bg-gray-100 px-4 py-2">
+                    <td colSpan={5} className="bg-gray-100 px-4 py-2">
                       <table className="w-full text-sm">
                         <thead>
                           <tr>

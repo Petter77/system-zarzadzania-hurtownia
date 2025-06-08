@@ -1,19 +1,84 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 
 const AddInventoryItem = () => {
   const [form, setForm] = useState({
     manufacturer: "",
+    device_type: "",
     model: "",
     description: "",
-    code: "",
     location: "",
     serialNumbers: [""],
   });
   const [message, setMessage] = useState(null);
+  const [descLocked, setDescLocked] = useState(false);
+  const [lastFetched, setLastFetched] = useState({ manufacturer: "", device_type: "", model: "" });
+  const descRef = useRef(null);
+
+  useEffect(() => {
+    if (descRef.current) {
+      descRef.current.style.height = "auto";
+      descRef.current.style.height = descRef.current.scrollHeight + "px";
+    }
+  }, [form.description, descLocked]);
+
+  useEffect(() => {
+    document.body.style.overflowY = "";
+    document.documentElement.style.overflowY = "";
+    return () => {
+      document.body.style.overflowY = "";
+      document.documentElement.style.overflowY = "";
+    };
+  }, []);
+
+  const fetchDescription = async (manufacturer, device_type, model) => {
+    try {
+      const res = await axios.get("http://localhost:3000/inventory/description", {
+        params: { manufacturer, device_type, model }
+      });
+      if (res.data && res.data.description) {
+        setForm(f => ({ ...f, description: res.data.description }));
+        setDescLocked(true);
+        setLastFetched({ manufacturer, device_type, model });
+      } else {
+        setDescLocked(false);
+        setLastFetched({ manufacturer: "", device_type: "", model: "" });
+      }
+    } catch (err) {
+      setDescLocked(false);
+      setLastFetched({ manufacturer: "", device_type: "", model: "" });
+    }
+  };
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm(prev => {
+      const updated = { ...prev, [name]: value };
+      if (["manufacturer", "device_type", "model"].includes(name)) {
+        if (
+          value !== lastFetched[name] ||
+          updated.manufacturer !== lastFetched.manufacturer ||
+          updated.device_type !== lastFetched.device_type ||
+          updated.model !== lastFetched.model
+        ) {
+          setDescLocked(false);
+          setForm(f => ({ ...f, description: "" }));
+          setLastFetched({ manufacturer: "", device_type: "", model: "" });
+        }
+        if (
+          (name === "manufacturer" ? value : updated.manufacturer) &&
+          (name === "device_type" ? value : updated.device_type) &&
+          (name === "model" ? value : updated.model)
+        ) {
+          fetchDescription(
+            name === "manufacturer" ? value : updated.manufacturer,
+            name === "device_type" ? value : updated.device_type,
+            name === "model" ? value : updated.model
+          );
+        }
+      }
+      return { ...updated };
+    });
   };
 
   const handleSerialChange = (idx, value) => {
@@ -45,10 +110,9 @@ const AddInventoryItem = () => {
     try {
       const res = await axios.post("http://localhost:3000/inventory/add-item", {
         manufacturer: form.manufacturer,
+        device_type: form.device_type,
         model: form.model,
         description: form.description,
-        code: form.code,
-        location: form.location,
       });
       const itemId = res.data.itemId;
 
@@ -61,12 +125,14 @@ const AddInventoryItem = () => {
       setMessage("Sprzęt został dodany!");
       setForm({
         manufacturer: "",
+        device_type: "",
         model: "",
         description: "",
-        code: "",
         location: "",
         serialNumbers: [""],
       });
+      setDescLocked(false);
+      setLastFetched({ manufacturer: "", device_type: "", model: "" });
     } catch (err) {
       if (err.response && err.response.data && err.response.data.error) {
         setMessage(err.response.data.error);
@@ -77,8 +143,8 @@ const AddInventoryItem = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start bg-gray-100 p-6 pt-10">
-      <h1 className="text-2xl font-bold mb-6 mt-2">Dodaj sprzęt do magazynu</h1>
+    <div className="min-h-screen flex flex-col items-center justify-start bg-gray-100 p-0">
+      <h1 className="text-2xl font-bold mb-6 mt-10">Dodaj sprzęt do magazynu</h1>
       <form
         onSubmit={handleSubmit}
         className="bg-white rounded shadow p-6 w-full max-w-lg space-y-4"
@@ -94,7 +160,22 @@ const AddInventoryItem = () => {
             value={form.manufacturer}
             onChange={handleChange}
             className="w-full border rounded px-2 py-1"
+            placeholder="np. Cisco"
             required
+            maxLength={100}
+          />
+        </div>
+        <div>
+          <label className="block font-medium mb-1">Typ urządzenia</label>
+          <input
+            type="text"
+            name="device_type"
+            value={form.device_type}
+            onChange={handleChange}
+            className="w-full border rounded px-2 py-1"
+            placeholder="np. switch, router, access point"
+            required
+            maxLength={50}
           />
         </div>
         <div>
@@ -105,27 +186,27 @@ const AddInventoryItem = () => {
             value={form.model}
             onChange={handleChange}
             className="w-full border rounded px-2 py-1"
+            placeholder="np. Catalyst 2960"
             required
+            maxLength={100}
           />
         </div>
         <div>
           <label className="block font-medium mb-1">Opis</label>
-          <input
-            type="text"
+          <textarea
+            ref={descRef}
             name="description"
             value={form.description}
             onChange={handleChange}
-            className="w-full border rounded px-2 py-1"
-          />
-        </div>
-        <div>
-          <label className="block font-medium mb-1">Kod</label>
-          <input
-            type="text"
-            name="code"
-            value={form.code}
-            onChange={handleChange}
-            className="w-full border rounded px-2 py-1"
+            className="w-full border rounded px-2 py-1 resize-none"
+            placeholder="np. Przełącznik warstwy 2, 24 porty"
+            maxLength={512}
+            rows={4}
+            disabled={descLocked}
+            style={{
+              ...(descLocked ? { backgroundColor: "#f3f4f6", color: "#6b7280" } : {}),
+              overflow: "hidden"
+            }}
           />
         </div>
         <div>
@@ -136,6 +217,8 @@ const AddInventoryItem = () => {
             value={form.location}
             onChange={handleChange}
             className="w-full border rounded px-2 py-1"
+            placeholder="np. Magazyn A"
+            maxLength={100}
           />
         </div>
         <div>
@@ -149,6 +232,7 @@ const AddInventoryItem = () => {
                 className="w-full border rounded px-2 py-1"
                 placeholder={`Numer seryjny #${idx + 1}`}
                 required
+                maxLength={100}
               />
               {form.serialNumbers.length > 1 && (
                 <button
