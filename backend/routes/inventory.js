@@ -118,4 +118,100 @@ router.get('/description', (req, res) => {
   );
 });
 
+router.post('/edit-item', (req, res) => {
+  const { old, updated } = req.body;
+  if (!old || !updated) {
+    return res.status(400).json({ error: "Brak wymaganych danych." });
+  }
+  const updateSql = `
+    UPDATE inventory_items
+    SET manufacturer = ?, device_type = ?, model = ?, description = ?
+    WHERE manufacturer = ? AND device_type = ? AND model = ?
+  `;
+  db.query(
+    updateSql,
+    [
+      updated.manufacturer,
+      updated.device_type,
+      updated.model,
+      updated.description,
+      old.manufacturer,
+      old.device_type,
+      old.model
+    ],
+    (err, result) => {
+      if (err) return res.status(500).json({ error: "Błąd serwera przy edycji sprzętu." });
+      res.json({ success: true, changedRows: result.changedRows });
+    }
+  );
+});
+
+router.post('/edit-instance', (req, res) => {
+  const { old_serial_number, updated } = req.body;
+  if (!old_serial_number || !updated) {
+    return res.status(400).json({ error: "Brak wymaganych danych." });
+  }
+  const updateSql = `
+    UPDATE item_instances
+    SET serial_number = ?, status = ?, location = ?
+    WHERE serial_number = ?
+  `;
+  db.query(
+    updateSql,
+    [
+      updated.serial_number,
+      updated.status,
+      updated.location,
+      old_serial_number
+    ],
+    (err, result) => {
+      if (err) return res.status(500).json({ error: "Błąd serwera przy edycji egzemplarza." });
+      res.json({ success: true, changedRows: result.changedRows });
+    }
+  );
+});
+
+router.post('/delete-instance', (req, res) => {
+  const { serial_number } = req.body;
+  if (!serial_number) {
+    return res.status(400).json({ error: "Brak numeru seryjnego." });
+  }
+  const deleteSql = `DELETE FROM item_instances WHERE serial_number = ?`;
+  db.query(deleteSql, [serial_number], (err, result) => {
+    if (err) return res.status(500).json({ error: "Błąd serwera przy usuwaniu egzemplarza." });
+    res.json({ success: true, affectedRows: result.affectedRows });
+  });
+});
+
+router.post('/delete-device', (req, res) => {
+  const { manufacturer, device_type, model } = req.body;
+  if (!manufacturer || !device_type || !model) {
+    return res.status(400).json({ error: "Brak wymaganych danych." });
+  }
+  db.query(
+    "SELECT id FROM inventory_items WHERE manufacturer = ? AND device_type = ? AND model = ? LIMIT 1",
+    [manufacturer, device_type, model],
+    (err, results) => {
+      if (err) return res.status(500).json({ error: "Błąd serwera." });
+      if (results.length === 0) return res.status(404).json({ error: "Nie znaleziono urządzenia." });
+      const itemId = results[0].id;
+      db.query(
+        "DELETE FROM item_instances WHERE item_id = ?",
+        [itemId],
+        (err) => {
+          if (err) return res.status(500).json({ error: "Błąd serwera przy usuwaniu egzemplarzy." });
+          db.query(
+            "DELETE FROM inventory_items WHERE id = ?",
+            [itemId],
+            (err2, result2) => {
+              if (err2) return res.status(500).json({ error: "Błąd serwera przy usuwaniu sprzętu." });
+              res.json({ success: true, affectedRows: result2.affectedRows });
+            }
+          );
+        }
+      );
+    }
+  );
+});
+
 module.exports = router;

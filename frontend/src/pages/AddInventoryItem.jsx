@@ -14,6 +14,7 @@ const AddInventoryItem = () => {
   const [descLocked, setDescLocked] = useState(false);
   const [lastFetched, setLastFetched] = useState({ manufacturer: "", device_type: "", model: "" });
   const descRef = useRef(null);
+  const addButtonRef = useRef(null);
 
   useEffect(() => {
     if (descRef.current) {
@@ -88,7 +89,15 @@ const AddInventoryItem = () => {
   };
 
   const addSerialField = () => {
-    setForm({ ...form, serialNumbers: [...form.serialNumbers, ""] });
+    setForm(prev => {
+      const updated = { ...prev, serialNumbers: [...prev.serialNumbers, ""] };
+      return updated;
+    });
+    setTimeout(() => {
+      if (addButtonRef.current) {
+        addButtonRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 0);
   };
 
   const removeSerialField = (idx) => {
@@ -143,11 +152,11 @@ const AddInventoryItem = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start bg-gray-100 p-0">
+    <div className="flex flex-col items-center justify-start bg-gray-100 p-0">
       <h1 className="text-2xl font-bold mb-6 mt-10">Dodaj sprzęt do magazynu</h1>
       <form
         onSubmit={handleSubmit}
-        className="bg-white rounded shadow p-6 w-full max-w-lg space-y-4"
+        className="bg-white rounded shadow p-6 w-full max-w-lg space-y-4 mb-16"
       >
         {message && (
           <div className="text-center text-sm font-semibold text-blue-600 mb-2">{message}</div>
@@ -200,7 +209,7 @@ const AddInventoryItem = () => {
             onChange={handleChange}
             className="w-full border rounded px-2 py-1 resize-none"
             placeholder="np. Przełącznik warstwy 2, 24 porty"
-            maxLength={512}
+            maxLength={256}
             rows={4}
             disabled={descLocked}
             style={{
@@ -250,6 +259,7 @@ const AddInventoryItem = () => {
             type="button"
             onClick={addSerialField}
             className="mt-1 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+            ref={addButtonRef}
           >
             Dodaj kolejną sztukę
           </button>
