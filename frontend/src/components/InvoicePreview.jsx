@@ -52,7 +52,10 @@ const InvoicePreview = ({ invoice, onClose }) => {
               ))}
             </tbody>
           </table>
-  
+          <p className="text-lg font-semibold text-right">
+            Do zapłaty:{" "}
+            <span className="text-green-600">{totalPrice.toFixed(2)} zł</span>
+          </p>
           
         </div>
       </div>
