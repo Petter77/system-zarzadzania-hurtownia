@@ -3,6 +3,7 @@ import axios from 'axios';
 
 const ToService = ({ setAction, availableItems, handleToServiceSuccess }) => {
   const [selectedItems, setSelectedItems] = useState({});
+const [serviceAddress, setServiceAddress] = useState('');
 
   const handleCheckboxChange = (itemId) => {
     setSelectedItems((prev) => ({
@@ -26,7 +27,9 @@ const ToService = ({ setAction, availableItems, handleToServiceSuccess }) => {
     try {
       const response = await axios.post(
         'http://localhost:3000/inout_operations/toService',
-        { item_ids: selectedIds }
+        { item_ids: selectedIds,
+          service_address: serviceAddress
+         }
       );
 
       console.log('Naprawa zapisana:', response.data);
@@ -83,12 +86,27 @@ const ToService = ({ setAction, availableItems, handleToServiceSuccess }) => {
           </tbody>
         </table>
       </div>
+      <div className="mt-6">
+  <label htmlFor="service-address" className="block text-sm font-medium text-gray-700 mb-2">
+    Adres serwisu
+  </label>
+  <input
+    type="text"
+    id="service-address"
+    value={serviceAddress}
+    onChange={(e) => setServiceAddress(e.target.value)}
+    placeholder="Wpisz adres serwisu, np. SerwisTech, ul. Przykładowa 123, Warszawa"
+    className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+    required
+  />
+</div>
 
       {/* Przycisk zatwierdzania */}
       <div className="flex justify-end pt-6">
         <button
           type="submit"
           className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow hover:bg-blue-700 transition"
+          
         >
           Zatwierdź dodanie do naprawy
         </button>

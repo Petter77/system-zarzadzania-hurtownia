@@ -50,6 +50,56 @@ router.post('/borrow', (req, res) => {
   });
 });
 
+// POST /inout_operations/toService
+router.post('/toService', (req, res) => {
+  console.log('REQ BODY CAŁY:', req.body);
+  const { item_ids, service_address } = req.body;
+
+  if (!Array.isArray(item_ids) || item_ids.length === 0 || !service_address) {
+    return res.status(400).json({ error: 'Brak danych do zapisania' });
+  }
+
+  const values = item_ids.map((instanceId) => [
+    instanceId,
+    'to_service',                  // <- zmieniono typ operacji
+    new Date(),
+    1,
+    service_address                // <- dodano adres serwisu
+  ]);
+
+  const insertQuery = `
+    INSERT INTO in_out_operations (instance_id, type, timestamp, quantity, service_destination)
+    VALUES ?
+  `;
+
+  db.query(insertQuery, [values], (insertErr, insertResult) => {
+    if (insertErr) {
+      console.error('Błąd zapisu do bazy:', insertErr);
+      return res.status(500).json({ error: 'Błąd serwera przy zapisie operacji serwisowej' });
+    }
+
+    const updateQuery = `
+      UPDATE item_instances
+      SET status = 'to_service'    -- <- zmieniono status na 'to_service'
+      WHERE id IN (${item_ids.map(() => '?').join(',')})
+    `;
+
+    db.query(updateQuery, item_ids, (updateErr, updateResult) => {
+      if (updateErr) {
+        console.error('Błąd aktualizacji statusu:', updateErr);
+        return res.status(500).json({ error: 'Błąd przy aktualizacji statusu urządzeń' });
+      }
+
+      return res.status(201).json({
+        message: 'Urządzenia dodane do serwisu, statusy zaktualizowane',
+        inserted: insertResult.affectedRows,
+        updated: updateResult.affectedRows
+      });
+    });
+  });
+});
+
+
 
 // POST /inout_operations/return
 router.post('/return', (req, res) => {
