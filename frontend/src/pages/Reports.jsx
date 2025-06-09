@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import CreateReportInventory from "../components/CreateReportInventory";
 import CreateReportInvoices from "../components/CreateReportInvoices";
+import CreateReportInOut from "../components/CreateReportInOut";
 import ViewReportInventory from "../components/ViewReportInventory";
 import ViewReportInvoices from "../components/ViewReportInvoices";
+import ViewReportInOut from "../components/ViewReportInOut";
 
 const Reports = ({ userToken }) => {
   const [activeModule, setActiveModule] = useState("view");
@@ -17,6 +19,8 @@ const Reports = ({ userToken }) => {
             return <ViewReportInventory userToken={userToken} />;
           case "invoices":
             return <ViewReportInvoices userToken={userToken} />;
+          case "inout":
+            return <ViewReportInOut userToken={userToken} />;
           default:
             return null;
         }
@@ -26,6 +30,8 @@ const Reports = ({ userToken }) => {
             return <CreateReportInventory userToken={userToken} />;
           case "invoices":
             return <CreateReportInvoices userToken={userToken} />;
+          case "inout":
+            return <CreateReportInOut userToken={userToken} />;
           default:
             return null;
         }
@@ -71,6 +77,12 @@ const Reports = ({ userToken }) => {
           className="mb-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400"
         >
           Faktury
+        </button>
+        <button
+          onClick={() => setActiveSecondStep("inout")}
+          className="mb-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400"
+        >
+          Operacje in/out
         </button>
       </div>
       <div className="reports-module">

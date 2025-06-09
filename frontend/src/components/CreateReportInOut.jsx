@@ -9,7 +9,8 @@ const CreateReport = ({ userToken }) => {
   const [finishDate, setFinishDate] = useState("");
   const [message, setMessage] = useState(null);
   const [usersData, setUsersData] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [performedBy, setPerformedBy] = useState([]);
+  const [types, setTypes] = useState([]);
 
 
   const decoded = jwtDecode(userToken);
@@ -37,6 +38,13 @@ const CreateReport = ({ userToken }) => {
   ? usersData.map(user => ({ value: user.id, label: user.username }))
   : [];
 
+  const typesList = [
+    { value: "toService", label: "Do serwisu" },
+    { value: "fromService", label: "Z serwisu" },
+    { value: "borrow", label: "Pożyczenie" },
+    { value: "return", label: "Zwrócenie" },
+  ];
+
   const handleSubmit = (e) => {
     setMessage("Tworzenie raportu...");
     e.preventDefault();
@@ -45,13 +53,14 @@ const CreateReport = ({ userToken }) => {
       reportName,
       startDate,
       finishDate,
-      users: users.map(option => option.value),
+      performedBy: performedBy.map(option => option.value),
+      types: types.map(option => option.value),
     };
-    //console.log("Wysłane dane:", formData);
+    console.log("Wysłane dane:", formData);
 
     const createReport = async () => {
       try {
-        await axios.post("http://localhost:3000/reports/createReportInvoices", formData, {
+        await axios.post("http://localhost:3000/reports/createReportInOut", formData, {
           headers: {
             Authorization: `Bearer ${userToken}`,
             "Content-Type": "application/json",
@@ -72,7 +81,7 @@ const CreateReport = ({ userToken }) => {
 
   return (
     <div className="container mx-auto p-6">
-      <h2 className="text-3xl font-semibold mb-6">Utwórz raport: faktury</h2>
+      <h2 className="text-3xl font-semibold mb-6">Utwórz raport: operacje in/out</h2>
       <form className="max-w-xl p-6 bg-white shadow-lg rounded-lg" onSubmit={handleSubmit}>
         {message && <p className="text-red-500 text-center font-semibold mb-4">{message}</p>}
         <div className="mb-4">
@@ -91,6 +100,34 @@ const CreateReport = ({ userToken }) => {
         <p className="block text-gray-700 mb-2 mx-auto text-center font-semibold">Filtry</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div className="mb-4">
+            <label htmlFor="reportPerformedBy" className="block text-gray-700 mb-2">Wykonane przez:</label>
+            <Select
+              isMulti
+              options={usersList}
+              value={performedBy}
+              onChange={setPerformedBy}
+              placeholder="wybierz..."
+              className="basic-multi-select"
+              classNamePrefix="select"
+              //className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="reportTypes" className="block text-gray-700 mb-2">Typy:</label>
+            <Select
+              isMulti
+              options={typesList}
+              value={types}
+              onChange={setTypes}
+              placeholder="wybierz..."
+              className="basic-multi-select"
+              classNamePrefix="select"
+              //className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+
           <div className="mb-4">
             <label htmlFor="startDate" className="block text-gray-700 mb-2">Data początkowa:</label>
             <input
@@ -115,20 +152,6 @@ const CreateReport = ({ userToken }) => {
               value={finishDate}
               onChange={e => setFinishDate(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
-
-          <div className="mb-4">
-            <label htmlFor="reportUsers" className="block text-gray-700 mb-2">Utworzone przez:</label>
-            <Select
-              isMulti
-              options={usersList}
-              value={users}
-              onChange={setUsers}
-              placeholder="wybierz..."
-              className="basic-multi-select"
-              classNamePrefix="select"
-              //className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
         </div>        
