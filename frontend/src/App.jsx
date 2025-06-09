@@ -8,6 +8,7 @@ import ManageUsers from './pages/ManageUsers';
 import Reports from './pages/Reports';
 import InOutOperations from './pages/InOutOperations';
 import Inventory from './pages/Inverntory';
+import Invoices from './pages/Invoices';
 import ManageInventory from "./pages/ManageInventory";
 import AddInventoryItem from "./pages/AddInventoryItem";
 import EditInventoryItem from "./pages/EditInventoryItem";
