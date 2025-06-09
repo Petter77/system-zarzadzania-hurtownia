@@ -19,7 +19,7 @@ router.post('/borrow', (req, res) => {
   ]);
 
   const query = `
-    INSERT INTO inout_operations (instance_id, type, timestamp, quantity)
+    INSERT INTO in_out_operations (instance_id, type, timestamp, quantity)
     VALUES ?
   `;
 
