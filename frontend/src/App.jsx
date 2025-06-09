@@ -3,7 +3,7 @@ import axios from 'axios';
 import './index.css';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
-import Invoices from './pages/Invoices';
+import Audit from './pages/Audit';
 import ManageUsers from './pages/ManageUsers';
 import Reports from './pages/Reports';
 import InOutOperations from './pages/InOutOperations';
@@ -44,13 +44,17 @@ function App() {
   }, [userToken]);
   
 
-  return(
-    <>
-      <Routes>
-      <Route path="/auth" element={!userToken ? <Auth setUserToken={setUserToken} /> : <Navigate to="/dashboard" replace />} />
+return (
+    <Routes>
+      <Route
+        path="/auth"
+        element={!userToken ? <Auth setUserToken={setUserToken} /> : <Navigate to="/dashboard" replace />}
+      />
       <Route element={<Layout userToken={userToken} setUserToken={setUserToken} />}>
         <Route path="/" element={<Dashboard />} />
-        <Route path="/dashboard" element={<Dashboard />} />        
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/audit" element={<Audit />} />
+
         {user && user.role === 'manager' && (
           <Route path="/manage-employees" element={<ManageUsers userToken={userToken} />} />
         )}
@@ -58,6 +62,7 @@ function App() {
         {user && user.role !== 'manager' && (
           <Route path="/manage-employees" element={<Navigate to="/dashboard" replace />} />
         )}
+
 
         {user && user.role === 'manager' && (
           <Route path="/reports" element={<Reports userToken={userToken} />} />
@@ -74,9 +79,8 @@ function App() {
         <Route path="/manageInventory/add" element={<AddInventoryItem />} />
         <Route path="/manageInventory/edit" element={<EditInventoryItem />} />
       </Route>
-      </Routes>
-    </>
-  )
+    </Routes>
+  );
 }
 
 export default App

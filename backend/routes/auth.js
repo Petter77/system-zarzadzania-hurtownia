@@ -3,7 +3,6 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const checkIfUserName = require('../middlewares/auth/checkIfUserName');
-
 const SECRET_KEY = 'secret';
 
 // login user with checkIfusername middleware for check if username is busy or username exists in db
