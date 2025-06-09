@@ -4,6 +4,7 @@ const auth = require('./routes/auth');
 const users = require('./routes/users');
 const invoices = require('./routes/invoices');
 const inout_operations = require('./routes/inout_operations');
+const inventory = require('./routes/inventory');
 const checkToken = require('./middlewares/auth/checkToken');
 const cors = require("cors");
 
@@ -22,5 +23,6 @@ app.use('/auth', auth);
 app.use('/users', checkToken, users);
 app.use('/invoices', invoices);
 app.use('/inout_operations', inout_operations); 
+app.use('/inventory', inventory);
 
 app.listen(port, () => console.log(`App listening on port ${port}!`));

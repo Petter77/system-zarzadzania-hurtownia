@@ -5,6 +5,10 @@ import Dashboard from './pages/Dashboard';
 import Invoices from './pages/Invoices';
 import ManageUsers from './pages/ManageUsers';
 import InOutOperations from './pages/InOutOperations';
+import Inventory from './pages/Inverntory';
+import ManageInventory from "./pages/ManageInventory";
+import AddInventoryItem from "./pages/AddInventoryItem";
+import EditInventoryItem from "./pages/EditInventoryItem";
 import { Routes, Route, Navigate } from "react-router";
 import Layout from "./Layout";
 
@@ -30,6 +34,10 @@ function App() {
         <Route path="/invoices" element={<Invoices />} />
         <Route path="/Transactions" element={<InOutOperations />} />
         <Route path="/manageUsers" element={<ManageUsers />} />
+        <Route path="/inventory" element={<Inventory />} />
+        <Route path="/manageInventory" element={<ManageInventory />} />
+        <Route path="/manageInventory/add" element={<AddInventoryItem />} />
+        <Route path="/manageInventory/edit" element={<EditInventoryItem />} />
       </Route>
       </Routes>
     </>
