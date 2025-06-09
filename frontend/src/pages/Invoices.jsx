@@ -9,9 +9,9 @@ const Invoices = () => {
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
 
-  const handleRowClick = async (number) => {
+  const handleRowClick = async (id) => {
     try {
-      const response = await axios.get(`http://localhost:3000/invoices/${encodeURIComponent(number)}`);
+      const response = await axios.get(`http://localhost:3000/invoices/${id}`);
       setSelectedInvoice(response.data);
     } catch (error) {
       console.error('Nie udało się pobrać szczegółów faktury:', error);
@@ -72,7 +72,7 @@ const Invoices = () => {
           {invoices.map((invoice, index) => (
             <tr
               key={index}
-              onClick={() => handleRowClick(invoice.number)}
+              onClick={() => handleRowClick(invoice.id)}
               className="cursor-pointer hover:bg-gray-100 transition"
             >
               <td>{invoice.number}</td>

@@ -10,9 +10,8 @@ router.get('/all', (req, res) => {
             invoices.id,
             invoices.number, 
             invoices.issued_at,
-            users.username
+            recipient_name
         FROM invoices 
-        JOIN users ON users.id = invoices.issued_by
         ORDER BY invoices.number;
     `;
 
@@ -63,31 +62,38 @@ router.post('/create', (req, res) => {
         [number, issued_at, recipient_name, recipient_address, recipient_nip],
         (err, invoiceResult) => {
             if (err) {
+                if (err.code === 'ER_DUP_ENTRY') {
+                  return res.status(400).json({ error: 'Faktura o tym numerze już istnieje.' });
+                }
                 console.error('Błąd przy tworzeniu faktury:', err);
                 return res.status(500).json({ error: 'Błąd przy tworzeniu faktury.' });
-            }
+              }
+
 
             const invoiceId = invoiceResult.insertId;
 
             const insertItemsQuery = `
-                INSERT INTO invoice_items (invoice_id, description, price)
-                VALUES ?
-            `;
+                  INSERT INTO invoice_items (invoice_id, instance_id, description, price)
+                  VALUES ${products.map(() => '(?, ?, ?, ?)').join(', ')}
+              `;
 
-            const itemValues = products.map(product => [
-                invoiceId,
-                product.description,
-                product.price,
-            ]);
+              const itemValues = products.flatMap(product => [
+                  invoiceId,
+                  product.instance_id,
+                  product.description,
+                  product.price,
+              ]);
+              console.log("Zapytanie:", insertItemsQuery);
+              console.log("Wartości:", itemValues);
+              db.query(insertItemsQuery, itemValues, (err) => {
+                  if (err) {
+                      console.error('Błąd przy dodawaniu pozycji faktury:', err);
+                      return res.status(500).json({ error: 'Błąd przy dodawaniu pozycji faktury.' });
+                  }
 
-            db.query(insertItemsQuery, [itemValues], (err) => {
-                if (err) {
-                    console.error('Błąd przy dodawaniu pozycji faktury:', err);
-                    return res.status(500).json({ error: 'Błąd przy dodawaniu pozycji faktury.' });
-                }
+                  res.status(201).json({ message: 'Faktura została utworzona pomyślnie.' });
+              });
 
-                res.status(201).json({ message: 'Faktura została utworzona pomyślnie.' });
-            });
         }
     );
 });
@@ -96,14 +102,28 @@ router.post('/create', (req, res) => {
 
 // GET /api/inventory-items
 router.get('/inventory-items', (req, res) => {
-    db.query("SELECT id, manufacturer, model, description FROM inventory_items", (err, items) => {
-      if (err) {
-        console.error("Błąd podczas pobierania przedmiotów:", err);
-        return res.status(500).json({ error: 'Błąd serwera przy pobieraniu przedmiotów.' });
-      }
-      res.json(items);
-    });
+  const query = `
+    SELECT 
+      item_instances.id AS instance_id,
+      item_instances.serial_number,
+      item_instances.status,
+      item_instances.location,
+      inventory_items.manufacturer,
+      inventory_items.model,
+      inventory_items.description
+    FROM item_instances
+    JOIN inventory_items ON item_instances.item_id = inventory_items.id
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Błąd podczas pobierania instancji przedmiotów:", err);
+      return res.status(500).json({ error: 'Błąd serwera przy pobieraniu instancji przedmiotów.' });
+    }
+    res.json(results);
   });
+});
+
 
 
 // get invoices details
@@ -121,7 +141,7 @@ router.get('/:number', (req, res) => {
         invoice_items.price
       FROM invoices 
       LEFT JOIN invoice_items ON invoices.id = invoice_items.invoice_id
-      WHERE invoices.number = ?
+      WHERE invoices.id = ?
     `;
   
     db.query(query, [number], (err, results) => {

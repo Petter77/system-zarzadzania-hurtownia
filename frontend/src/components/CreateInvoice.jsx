@@ -8,7 +8,7 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
     recipient_name: "",
     recipient_address: "",
     recipient_nip: "",
-    products: [{ description: "", price: "" }],
+    products: [{ instance_id: "", price: "" }],
   });
 
   const [message, setMessage] = useState(null);
@@ -40,7 +40,7 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
   const handleAddProduct = () => {
     setFormData((prev) => ({
       ...prev,
-      products: [...prev.products, { description: "", price: "" }],
+      products: [...prev.products, { instance_id: "", price: "" }],
     }));
   };
 
@@ -62,10 +62,14 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
     try {
       await axios.post("http://localhost:3000/invoices/create", {
         ...formData,
-        products: formData.products.map((p) => ({
-          description: p.description,
-          price: parseFloat(p.price),
-        })),
+        products: formData.products.map((p) => {
+          const selectedItem = items.find((item) => item.instance_id === parseInt(p.instance_id));
+          return {
+            instance_id: parseInt(p.instance_id),
+            description: selectedItem ? `${selectedItem.manufacturer} ${selectedItem.model}` : "",
+            price: parseFloat(p.price),
+          };
+        }),
       });
 
       setMessage("Faktura została utworzona.");
@@ -75,12 +79,14 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
         recipient_name: "",
         recipient_address: "",
         recipient_nip: "",
-        products: [{ description: "", price: "" }],
+        products: [{ instance_id: "", price: "" }],
       });
-      //handleCreateInvoiceSuccess();
+
+      if (handleCreateInvoiceSuccess) handleCreateInvoiceSuccess();
     } catch (err) {
       console.error(err);
-      //setMessage("Błąd podczas tworzenia faktury.");
+      const errorMsg = err.response?.data?.error || "Błąd podczas tworzenia faktury.";
+      setMessage(errorMsg);
     }
   };
 
@@ -175,18 +181,15 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
                 <td className="py-2 px-4">{index + 1}</td>
                 <td className="py-2 px-4">
                   <select
-                    name="description"
-                    value={product.description}
+                    name="instance_id"
+                    value={product.instance_id}
                     onChange={(e) => handleChange(e, index)}
                     required
                     className="w-full p-2 border border-gray-300 rounded"
                   >
                     <option value="">Wybierz przedmiot</option>
                     {items.map((item) => (
-                      <option
-                        key={item.id}
-                        value={`${item.manufacturer} ${item.model}`}
-                      >
+                      <option key={item.instance_id} value={item.instance_id}>
                         {item.manufacturer} {item.model}
                       </option>
                     ))}
@@ -227,15 +230,12 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
 
         <div className="text-right mb-8">
           <p className="text-lg font-semibold">
-            Do zapłaty:{" "}
-            <span className="text-green-600">{totalPrice.toFixed(2)} zł</span>
+            Do zapłaty: <span className="text-green-600">{totalPrice.toFixed(2)} zł</span>
           </p>
         </div>
 
         {message && (
-          <p className="text-center text-red-500 font-semibold mb-6">
-            {message}
-          </p>
+          <p className="text-center text-red-500 font-semibold mb-6">{message}</p>
         )}
 
         <div className="text-left mb-8">
