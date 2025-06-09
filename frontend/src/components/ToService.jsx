@@ -68,22 +68,31 @@ const [serviceAddress, setServiceAddress] = useState('');
             </tr>
           </thead>
           <tbody>
-            {availableItems.map((item) => (
-              <tr key={item.id} className="border-t border-gray-200">
-                <td className="px-4 py-2 text-center">
-                  <input
-                    type="checkbox"
-                    checked={!!selectedItems[item.id]}
-                    onChange={() => handleCheckboxChange(item.id)}
-                  />
+            {availableItems.length === 0 ? (
+              <tr>
+                <td colSpan="5" className="text-center py-6 text-gray-500 italic">
+                  Brak dostępnych urządzeń do dodania do naprawy.
                 </td>
-                <td className="px-4 py-2">{item.manufacturer}</td>
-                <td className="px-4 py-2">{item.model}</td>
-                <td className="px-4 py-2">{item.serial_number}</td>
-                <td className="px-4 py-2">{item.description}</td>
               </tr>
-            ))}
+            ) : (
+              availableItems.map((item) => (
+                <tr key={item.id} className="border-t border-gray-200">
+                  <td className="px-4 py-2 text-center">
+                    <input
+                      type="checkbox"
+                      checked={!!selectedItems[item.id]}
+                      onChange={() => handleCheckboxChange(item.id)}
+                    />
+                  </td>
+                  <td className="px-4 py-2">{item.manufacturer}</td>
+                  <td className="px-4 py-2">{item.model}</td>
+                  <td className="px-4 py-2">{item.serial_number}</td>
+                  <td className="px-4 py-2">{item.description}</td>
+                </tr>
+              ))
+            )}
           </tbody>
+
         </table>
       </div>
       <div className="mt-6">
