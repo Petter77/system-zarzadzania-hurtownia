@@ -94,9 +94,89 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
     (acc, item) => acc + (parseFloat(item.price) || 0),
     0
   );
+  
+  const handleFileUpload = (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const content = e.target.result;
+    const lines = content.split("\n").map((line) => line.trim());
+
+    const newForm = {
+      number: "",
+      issued_at: "",
+      recipient_name: "",
+      recipient_address: "",
+      recipient_nip: "",
+      products: [],
+    };
+
+    let mode = null; // null | 'nabywca' | 'produkty'
+
+    lines.forEach((line) => {
+      if (line.startsWith("Faktura nr:")) {
+        newForm.number = line.split("Faktura nr:")[1].trim();
+      } else if (line.startsWith("Data wystawienia:")) {
+        const date = line.split("Data wystawienia:")[1].trim();
+        newForm.issued_at = new Date(date).toISOString().slice(0, 10);
+      } else if (line.startsWith("Nabywca:")) {
+        mode = "nabywca";
+      } else if (line.startsWith("Produkty:")) {
+        mode = "produkty";
+      } else if (line.startsWith("Sprzedawca:")) {
+        mode = null; // pomijamy dane sprzedawcy
+      } else if (line.startsWith("Do zapłaty:")) {
+        mode = null;
+      } else if (mode === "nabywca") {
+        if (!newForm.recipient_name) {
+          newForm.recipient_name = line;
+        } else if (!newForm.recipient_address) {
+          newForm.recipient_address = line;
+        } else if (!newForm.recipient_nip) {
+          newForm.recipient_nip = line;
+        }
+      } else if (mode === "produkty") {
+        const match = line.match(/^\d+\.\s+(.+)\s+-\s+(\d+(\.\d+)?)\s+zł$/);
+        if (match) {
+          const description = match[1];
+          const price = parseFloat(match[2]);
+
+          const matched = items.find(
+            (i) => `${i.manufacturer} ${i.model}` === description
+          );
+
+          newForm.products.push({
+            instance_id: matched ? matched.instance_id : "",
+            price: price.toFixed(2),
+          });
+        }
+      }
+    });
+
+    setFormData((prev) => ({
+      ...prev,
+      ...newForm,
+    }));
+
+    setMessage("Dane z pliku zostały wczytane.");
+  };
+
+  reader.readAsText(file);
+};
+
+
 
   return (
     <div className="flex justify-center bg-gray-100 py-20 px-4">
+      <input
+        type="file"
+        accept=".txt"
+        onChange={handleFileUpload}
+        className="absolute top-6 left-6"
+      />
+
       <form
         onSubmit={handleSubmit}
         className="relative bg-white border border-gray-300 shadow-lg p-10 rounded-md w-full max-w-[960px]"
@@ -238,9 +318,7 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
           <p className="text-center text-red-500 font-semibold mb-6">{message}</p>
         )}
 
-        <div className="text-left mb-8">
-          <p className="text-lg font-semibold">Przelew środków wykonać na konto:</p>
-        </div>
+        
 
         <button
           type="submit"
