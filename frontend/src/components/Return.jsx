@@ -71,14 +71,14 @@ const Return = ({ setIsReturnFormOpen, handleReturnInvoiceSuccess, borrowedItems
             </tr>
           </thead>
           <tbody>
-            {availableItems.length === 0 ? (
+            {borrowedItems.length === 0 ? (
               <tr>
                 <td colSpan="5" className="text-center py-6 text-gray-500 italic">
                   Brak dostępnych urządzeń do zwrotu.
                 </td>
               </tr>
             ) : (
-              availableItems.map((item) => (
+              borrowedItems.map((item) => (
                 <tr key={item.id} className="border-t border-gray-200">
                   <td className="px-4 py-2 text-center">
                     <input
