@@ -49,7 +49,7 @@ const [serviceAddress, setServiceAddress] = useState('');
       onClick={() => setAction('')}
       className="absolute top-6 right-6 text-red-600 font-bold hover:text-red-800 text-lg"
     >
-      ✕
+      Zamknij
     </button>
 
     <h2 className="text-3xl font-bold text-blue-700 mb-8">Dodaj urządzenia do naprawy</h2>

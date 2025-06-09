@@ -46,7 +46,7 @@ const FromService = ({ setAction, itemsInService, handleFromServiceSuccess }) =>
       onClick={() => setAction('')}
       className="absolute top-6 right-6 text-red-600 font-bold hover:text-red-800 text-lg"
     >
-      ✕
+      Zamknij
     </button>
 
     <h2 className="text-3xl font-bold text-green-700 mb-8">Przywróć urządzenia z naprawy</h2>
