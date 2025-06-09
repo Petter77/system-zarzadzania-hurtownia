@@ -77,7 +77,7 @@ const Invoices = () => {
             >
               <td>{invoice.number}</td>
               <td>{new Date(invoice.issued_at).toLocaleDateString()}</td>
-              <td>{invoice.recipient_name}</td>
+              <td>{invoice.username}</td>
             </tr>
           ))}
         </tbody>

@@ -166,6 +166,8 @@ router.get('/available', (req, res) => {
       inventory_items AS inv ON ii.item_id = inv.id
     WHERE 
       ii.status = 'available'
+    ORDER BY
+      inv.model
   `;
 
   db.query(query, (err, results) => {
@@ -193,6 +195,8 @@ router.get('/borrowed', (req, res) => {
       inventory_items AS inv ON ii.item_id = inv.id
     WHERE 
       ii.status = 'borrowed'
+    ORDER BY
+      inv.model 
   `;
 
   db.query(query, (err, results) => {
@@ -220,6 +224,8 @@ router.get('/damaged', (req, res) => {
       inventory_items AS inv ON ii.item_id = inv.id
     WHERE 
       ii.status = 'damaged'
+    ORDER BY
+      inv.model
   `;
 
   db.query(query, (err, results) => {

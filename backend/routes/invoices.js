@@ -10,8 +10,9 @@ router.get('/all', (req, res) => {
             invoices.id,
             invoices.number, 
             invoices.issued_at,
-            invoices.recipient_name
+            users.username
         FROM invoices 
+        JOIN users ON users.id = invoices.issued_by
         ORDER BY invoices.number;
     `;
 
