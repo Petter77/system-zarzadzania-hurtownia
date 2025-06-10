@@ -171,19 +171,48 @@ router.post('/edit-item', async (req, res) => {
             const oldItemId = oldResults[0].id;
 
             db.query(
-              "UPDATE item_instances SET item_id = ? WHERE item_id = ?",
-              [newItemId, oldItemId],
-              (err3) => {
-                if (err3) return res.status(500).json({ error: "Błąd serwera przy przepinaniu egzemplarzy." });
-
+              "SELECT serial_number FROM item_instances WHERE item_id = ?",
+              [oldItemId],
+              (err3, oldSerials) => {
+                if (err3) return res.status(500).json({ error: "Błąd serwera przy pobieraniu numerów seryjnych." });
+                const serials = oldSerials.map(r => r.serial_number);
+                if (serials.length === 0) {
+                  doMerge();
+                  return;
+                }
                 db.query(
-                  "DELETE FROM inventory_items WHERE id = ?",
-                  [oldItemId],
-                  (err4) => {
-                    if (err4) return res.status(500).json({ error: "Błąd serwera przy usuwaniu starego sprzętu." });
-                    return res.json({ success: true, merged: true });
+                  `SELECT serial_number FROM item_instances WHERE item_id = ? AND serial_number IN (${serials.map(() => '?').join(',')})`,
+                  [newItemId, ...serials],
+                  (err4, dupes) => {
+                    if (err4) return res.status(500).json({ error: "Błąd serwera przy sprawdzaniu duplikatów numerów seryjnych." });
+                    if (dupes.length > 0) {
+                      return res.status(400).json({
+                        error: "Nie można scalić sprzętów, ponieważ występują powtarzające się numery seryjne.",
+                        duplicateSerials: dupes.map(d => d.serial_number)
+                      });
+                    }
+                    doMerge();
                   }
                 );
+
+                function doMerge() {
+                  db.query(
+                    "UPDATE item_instances SET item_id = ? WHERE item_id = ?",
+                    [newItemId, oldItemId],
+                    (err5) => {
+                      if (err5) return res.status(500).json({ error: "Błąd serwera przy przepinaniu egzemplarzy." });
+
+                      db.query(
+                        "DELETE FROM inventory_items WHERE id = ?",
+                        [oldItemId],
+                        (err6) => {
+                          if (err6) return res.status(500).json({ error: "Błąd serwera przy usuwaniu starego sprzętu." });
+                          return res.json({ success: true, merged: true });
+                        }
+                      );
+                    }
+                  );
+                }
               }
             );
           }

@@ -239,6 +239,15 @@ const EditInventoryItem = () => {
         err.response &&
         err.response.data &&
         err.response.data.error &&
+        err.response.data.duplicateSerials
+      ) {
+        setEditMessage(
+          "Nie można zedytować sprzętu, ponieważ występują powielone numery seryjne wśród egzemplarzy."
+        );
+      } else if (
+        err.response &&
+        err.response.data &&
+        err.response.data.error &&
         err.response.data.error.includes("Numer seryjny już istnieje dla tego producenta")
       ) {
         setEditMessage("Numer seryjny już istnieje dla tego producenta.");
