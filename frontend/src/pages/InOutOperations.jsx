@@ -42,39 +42,39 @@ const Transactions = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-64px)] bg-gray-100">
-      <h1 className="text-5xl font-extrabold text-center mb-8 tracking-tight">Transactions</h1>
+      <h1 className="text-5xl font-extrabold text-center mb-8 tracking-tight">Transakcje</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-8 w-auto">
         <TileButton
           icon={<FaTools />}
-          title="To Service"
-          subtitle="Item Damage"
+          title="Do srewisu"
+          subtitle="Uszkodzone urządzenie"
           iconColor="text-green-600"
           onClick={() => handleClick('IN')}
         />
         <TileButton
           icon={<FaUndo />}
-          title="Return from Service"
-          subtitle="Back from damaged"
+          title="Powrót z serwisu"
+          subtitle="Naprawione urządzenie"
           iconColor="text-red-500"
           onClick={() => handleClick('OUT')}
         />
         <TileButton
           icon={<FaArrowRight />}
-          title="Borrow"
-          subtitle="Get an item"
+          title="Wypożycz"
+          subtitle="Wybir urządzenie"
           iconColor="text-blue-500"
           onClick={() => setIsBorrowFormOpen(true)}
         />
         <TileButton
           icon={<FaArrowLeft />}
-          title="Return"
-          subtitle="Give back borrowed"
+          title="Zwróc"
+          subtitle="Oddaj urządzenie"
           iconColor="text-yellow-500"
           onClick={() => handleClick('Return')}
         />
       </div>
 
-      {action && <p className="mt-6 text-lg">You selected: <strong>{action}</strong></p>}
+      {action && <p className="mt-6 text-lg">Wybrano: <strong>{action}</strong></p>}
 
       {/* Borrow Modal */}
       {isBorrowFormOpen && (
