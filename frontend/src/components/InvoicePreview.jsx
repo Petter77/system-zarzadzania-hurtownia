@@ -14,44 +14,7 @@ const downloadPdfInvoice = async (invoice) => {
   URL.revokeObjectURL(url);
 };
 
-// Funkcja do generowania i pobierania pliku .txt
-const downloadTxtInvoice = (invoice) => {
-  const lines = [];
 
-  lines.push(`Faktura nr: ${invoice.number}`);
-  lines.push(`Data wystawienia: ${new Date(invoice.issued_at).toLocaleDateString()}`);
-  lines.push("");
-  lines.push("Sprzedawca:");
-  lines.push("Sieciowi");
-  lines.push("Marsjańska √-1a");
-  lines.push("NIP: 0000000000");
-  lines.push("");
-  lines.push("Nabywca:");
-  lines.push(`${invoice.recipient_name}`);
-  lines.push(`${invoice.recipient_address}`);
-  lines.push(`${invoice.recipient_nip}`);
-  lines.push("");
-  lines.push("Produkty:");
-
-  invoice.products.forEach((p, index) => {
-    lines.push(`${index + 1}. ${p.description} - ${Number(p.price).toFixed(2)} zł`);
-  });
-
-  const total = invoice.products.reduce((sum, p) => sum + Number(p.price || 0), 0);
-  lines.push("");
-  lines.push(`Do zapłaty: ${total.toFixed(2)} zł`);
-
-  const content = lines.join("\n");
-  const blob = new Blob([content], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `faktura-${invoice.number}.txt`;
-  a.click();
-
-  URL.revokeObjectURL(url); // zwolnienie zasobów
-};
 
 const InvoicePreview = ({ invoice, onClose }) => {
   const totalPrice = invoice.products.reduce((sum, p) => sum + Number(p.price || 0), 0);
@@ -114,13 +77,7 @@ const InvoicePreview = ({ invoice, onClose }) => {
           Do zapłaty:{" "}
           <span className="text-green-600">{totalPrice.toFixed(2)} zł</span>
         </p>
-
-        <button
-          onClick={() => downloadTxtInvoice(invoice)}
-          className="mt-6 self-end bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
-        >
-          Pobierz jako TXT
-        </button>
+        
         <button
           onClick={() => downloadPdfInvoice(invoice)}
           className="mt-2 self-end bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700"

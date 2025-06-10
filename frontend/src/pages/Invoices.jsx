@@ -8,8 +8,12 @@ const Invoices = () => {
   const [loading, setLoading] = useState(true);
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [filter, setFilter] = useState("all");
 
-  
+  // Nowe stany dla filtrowania po numerze i dacie
+  const [searchNumber, setSearchNumber] = useState('');
+  const [searchDate, setSearchDate] = useState('');
+
   const fetchInvoices = async () => {
     setLoading(true);
     try {
@@ -26,7 +30,6 @@ const Invoices = () => {
     fetchInvoices();
   }, []);
 
-  
   const handleRowClick = async (id) => {
     try {
       const response = await axios.get(`http://localhost:3000/invoices/${id}`);
@@ -36,7 +39,6 @@ const Invoices = () => {
     }
   };
 
-  
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file || file.type !== "application/pdf") {
@@ -55,13 +57,11 @@ const Invoices = () => {
     formData.append("number", number);
 
     try {
-      const response = await axios.post(
+      await axios.post(
         "http://localhost:3000/invoices/upload-pdf",
         formData,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          headers: { "Content-Type": "multipart/form-data" },
         }
       );
       alert("Plik PDF został przesłany pomyślnie.");
@@ -78,9 +78,9 @@ const Invoices = () => {
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Faktury</h1>
 
-      
+      {/* Upload PDF */}
       <label className="custom-file-upload cursor-pointer bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-        Wybierz plik PDF
+        Zarchiwizuj fakturę (PDF)
         <input
           type="file"
           accept=".pdf"
@@ -89,13 +89,115 @@ const Invoices = () => {
         />
       </label>
 
-      
+      {/* Dodaj formularz */}
       <button 
         onClick={() => setIsCreateFormOpen(true)}
         className="ml-4 mb-4 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-700 focus:outline-none"
       >
         Dodaj Fakturę (formularz)
       </button>
+
+      {/* Przyciski filtrowania */}
+      <div className="mt-4 mb-4 flex flex-wrap gap-2">
+        <button
+          onClick={() => setFilter("all")}
+          className={`px-4 py-2 rounded ${filter === "all" ? "bg-blue-500 text-white" : "bg-gray-200 text-black"}`}
+        >
+          Wszystkie
+        </button>
+        <button
+          onClick={() => setFilter("withPdf")}
+          className={`px-4 py-2 rounded ${filter === "withPdf" ? "bg-blue-500 text-white" : "bg-gray-200 text-black"}`}
+        >
+          Zarchiwizowane (PDF)
+        </button>
+        <button
+          onClick={() => setFilter("withoutPdf")}
+          className={`px-4 py-2 rounded ${filter === "withoutPdf" ? "bg-blue-500 text-white" : "bg-gray-200 text-black"}`}
+        >
+          Wystawione
+        </button>
+      </div>
+
+      {/* Filtry po numerze i dacie */}
+      <div className="flex flex-wrap gap-4 mb-4">
+        <input
+          type="text"
+          placeholder="Szukaj po numerze faktury"
+          value={searchNumber}
+          onChange={(e) => setSearchNumber(e.target.value)}
+          className="px-4 py-2 border rounded-md"
+        />
+        <input
+          type="date"
+          value={searchDate}
+          onChange={(e) => setSearchDate(e.target.value)}
+          className="px-4 py-2 border rounded-md"
+        />
+      </div>
+
+      <div className="max-h-[400px] overflow-y-auto border border-gray-300 rounded-md">
+        <table className="min-w-full table-auto border-collapse">
+          <thead className="sticky top-0 bg-white z-10">
+            <tr>
+              <th className="px-4 py-2 border-b text-left">Numer faktury</th>
+              <th className="px-4 py-2 border-b text-left">Data</th>
+              <th className="px-4 py-2 border-b text-left">Akcja</th>
+            </tr>
+          </thead>
+          <tbody>
+            {invoices
+              .filter(invoice => {
+                const matchesPdfFilter =
+                  filter === "withPdf" ? invoice.has_pdf :
+                  filter === "withoutPdf" ? !invoice.has_pdf : true;
+
+                const matchesNumber = invoice.number
+                  .toLowerCase()
+                  .includes(searchNumber.toLowerCase());
+
+                const matchesDate = searchDate
+                  ? new Date(invoice.issued_at).toISOString().slice(0, 10) === searchDate
+                  : true;
+
+                return matchesPdfFilter && matchesNumber && matchesDate;
+              })
+              .map((invoice, index) => (
+                <tr key={index} className="hover:bg-gray-100 transition">
+                  <td className="px-4 py-2 border-b">{invoice.number}</td>
+                  <td className="px-4 py-2 border-b">{new Date(invoice.issued_at).toLocaleDateString()}</td>
+                  <td className="px-4 py-2 border-b">
+                    {invoice.has_pdf ? (
+                      <a
+                        href={`http://localhost:3000/invoices/pdf/${invoice.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block px-4 py-2 bg-blue-100 text-black rounded-lg hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      >
+                        Pobierz PDF
+                      </a>
+                    ) : (
+                      <button
+                        onClick={() => handleRowClick(invoice.id)}
+                        className="px-4 py-2 bg-green-100 text-black rounded-lg hover:bg-green-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-green-400"
+                      >
+                        Podgląd
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Podgląd faktury */}
+      {selectedInvoice && (
+        <InvoicePreview
+          invoice={selectedInvoice}
+          onClose={() => setSelectedInvoice(null)}
+        />
+      )}
 
       {/* Formularz dodawania */}
       {isCreateFormOpen && (
@@ -113,59 +215,6 @@ const Invoices = () => {
             />
           </div>
         </div>
-      )}
-
-      {/* Tabela faktur */}
-      <table className="min-w-full table-auto border-collapse border border-gray-300">
-        <thead>
-  <tr>
-    <th className="px-4 py-2 border-b text-left">Numer faktury</th>
-    <th className="px-4 py-2 border-b text-left">Data wystawienia</th>
-    <th className="px-4 py-2 border-b text-left">Akcja</th>
-  </tr>
-</thead>
-
-<tbody>
-  {invoices.map((invoice, index) => (
-    <tr
-      key={index}
-      className="hover:bg-gray-100 transition"
-    >
-      <td>{invoice.number}</td>
-      <td>{new Date(invoice.issued_at).toLocaleDateString()}</td>
-
-      <td>
-        {invoice.has_pdf ? (
-          
-          <a
-            href={`http://localhost:3000/invoices/pdf/${invoice.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline"
-          >
-            Pobierz PDF
-          </a>
-        ) : (
-          
-          <button
-            onClick={() => handleRowClick(invoice.id)}
-            className="text-green-600 hover:underline"
-          >
-            Podgląd
-          </button>
-        )}
-      </td>
-    </tr>
-  ))}
-</tbody>
-      </table>
-
-      {/* Podgląd faktury */}
-      {selectedInvoice && (
-        <InvoicePreview
-          invoice={selectedInvoice}
-          onClose={() => setSelectedInvoice(null)}
-        />
       )}
     </div>
   );

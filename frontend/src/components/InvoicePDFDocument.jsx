@@ -35,7 +35,7 @@ export const InvoicePDFDocument = ({ invoice }) => {
         <View style={styles.section}>
           <Text style={styles.bold}>Sprzedawca:</Text>
           <Text>Sieciowi</Text>
-          <Text>Marsjańska √-1a</Text>
+          <Text>Marsjanska √-1a</Text>
           <Text>NIP: 0000000000</Text>
         </View>
 
@@ -52,7 +52,7 @@ export const InvoicePDFDocument = ({ invoice }) => {
             <View style={styles.row}>
               <Text style={[styles.cell, styles.bold]}>Lp</Text>
               <Text style={[styles.cell, styles.bold]}>Nazwa</Text>
-              <Text style={[styles.cell, styles.bold]}>Cena netto (zł)</Text>
+              <Text style={[styles.cell, styles.bold]}>Cena netto (zl)</Text>
             </View>
           </View>
           {invoice.products.map((p, i) => (
@@ -65,7 +65,7 @@ export const InvoicePDFDocument = ({ invoice }) => {
         </View>
 
         <View style={{ marginTop: 10, alignItems: "flex-end" }}>
-          <Text style={[styles.bold]}>Do zapłaty: {total.toFixed(2)} zł</Text>
+          <Text style={[styles.bold]}>Do zaplaty: {total.toFixed(2)} zł</Text>
         </View>
       </Page>
     </Document>

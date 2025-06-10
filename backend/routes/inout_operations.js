@@ -5,9 +5,9 @@ const db = require('../db');
 // POST /inout_operations/borrow
 router.post('/borrow', (req, res) => {
   console.log('REQ BODY CAŁY:', req.body);
-  const { item_ids } = req.body;
+  const { item_ids, service_address} = req.body;
 
-  if (!Array.isArray(item_ids) || item_ids.length === 0) {
+  if (!Array.isArray(item_ids) || item_ids.length === 0 || !service_address) {
     return res.status(400).json({ error: 'Brak danych do zapisania' });
   }
 
@@ -15,11 +15,12 @@ router.post('/borrow', (req, res) => {
     instanceId,
     'borrow',
     new Date(),
-    1
+    1,
+    service_address
   ]);
 
   const insertQuery = `
-    INSERT INTO in_out_operations (instance_id, type, timestamp, quantity)
+    INSERT INTO in_out_operations (instance_id, type, timestamp, quantity, service_destination)
     VALUES ?
   `;
 
@@ -80,7 +81,7 @@ router.post('/toService', (req, res) => {
 
     const updateQuery = `
       UPDATE item_instances
-      SET status = 'to_service'    -- <- zmieniono status na 'to_service'
+      SET status = 'damaged'    -- <- zmieniono status na 'to_service'
       WHERE id IN (${item_ids.map(() => '?').join(',')})
     `;
 
