@@ -132,7 +132,7 @@ const EditInventoryItem = () => {
   const filteredStock = stock
     .filter(item =>
       (!filters.manufacturer || item.manufacturer?.toLowerCase().startsWith(filters.manufacturer.toLowerCase())) &&
-      (!filters.device_type || item.device_type?.toLowerCase() === filters.device_type.toLowerCase()) &&
+      (!filters.device_type || item.device_type?.toLowerCase().includes(filters.device_type.toLowerCase())) &&
       (!filters.model || item.model?.toLowerCase().startsWith(filters.model.toLowerCase()))
     )
     .map(item => ({
@@ -144,7 +144,6 @@ const EditInventoryItem = () => {
         (!filters.serial || (inst.serial_number && inst.serial_number.toLowerCase().startsWith(filters.serial.toLowerCase())))
       )
     }))
-    .filter(item => item.instances.length > 0)
     .sort((a, b) => {
       let aVal = a[sortBy];
       let bVal = b[sortBy];
@@ -211,7 +210,13 @@ const EditInventoryItem = () => {
             description: editForm.description,
           }
         });
-        alert("Edycja sprzętu zakończona sukcesem!");
+        const count = editItem?.item?.instances?.length || 1;
+        alert(`Edycja sprzętu dla ${count} urządzeń zakończona sukcesem!`);
+        setEditItem(null);
+        setEditForm({});
+        axios.get("http://localhost:3000/inventory/stock")
+          .then(res => setStock(res.data))
+          .catch(() => setStock([]));
       } else if (editItem.type === "instance") {
         await axios.post("http://localhost:3000/inventory/edit-instance", {
           old_serial_number: editItem.inst.serial_number,
@@ -221,17 +226,27 @@ const EditInventoryItem = () => {
             location: editForm.location,
           }
         });
+        setEditMessage("Zapisano zmiany.");
         alert("Edycja egzemplarza zakończona sukcesem!");
+        setEditItem(null);
+        setEditForm({});
+        axios.get("http://localhost:3000/inventory/stock")
+          .then(res => setStock(res.data))
+          .catch(() => setStock([]));
       }
-      setEditMessage("Zapisano zmiany.");
-      setEditItem(null);
-      setEditForm({});
-      axios.get("http://localhost:3000/inventory/stock")
-        .then(res => setStock(res.data))
-        .catch(() => setStock([]));
     } catch (err) {
-      setEditMessage("Błąd podczas zapisu.");
-      alert("Błąd podczas edycji.");
+      if (
+        err.response &&
+        err.response.data &&
+        err.response.data.error &&
+        err.response.data.error.includes("Numer seryjny już istnieje dla tego producenta")
+      ) {
+        setEditMessage("Numer seryjny już istnieje dla tego producenta.");
+      } else if (err.response && err.response.data && err.response.data.error) {
+        setEditMessage(err.response.data.error);
+      } else {
+        setEditMessage("Błąd podczas zapisu.");
+      }
     }
   };
 
@@ -321,17 +336,15 @@ const EditInventoryItem = () => {
           </div>
           <div className="mb-3">
             <label className="block text-sm font-medium mb-1">Typ urządzenia</label>
-            <select
+            <input
+              type="text"
               name="device_type"
               value={filters.device_type}
               onChange={handleFilterChange}
               className="w-full border rounded px-2 py-1"
-            >
-              <option value="">Wszystkie</option>
-              <option value="switch">Switch</option>
-              <option value="router">Router</option>
-              <option value="access point">Access Point</option>
-            </select>
+              placeholder="np. switch"
+              autoComplete="off"
+            />
           </div>
           <div className="mb-3">
             <label className="block text-sm font-medium mb-1">Model</label>
@@ -455,8 +468,14 @@ const EditInventoryItem = () => {
             {filteredStock.map((item, idx) => (
               <React.Fragment key={item.manufacturer + item.model}>
                 <tr
-                  className="bg-white transition-colors cursor-pointer hover:bg-blue-50"
-                  onClick={() => toggleExpand(idx)}
+                  className={`bg-white transition-colors ${
+                    item.instances.length > 0
+                      ? "cursor-pointer hover:bg-blue-50"
+                      : "cursor-default"
+                  }`}
+                  onClick={() => {
+                    if (item.instances.length > 0) toggleExpand(idx);
+                  }}
                 >
                   <TruncatedCell className="px-4 py-2 border-b max-w-[180px]" titleText={item.manufacturer}>
                     {item.manufacturer}
@@ -468,7 +487,14 @@ const EditInventoryItem = () => {
                     {item.model}
                   </TruncatedCell>
                   <TruncatedCell className="px-4 py-2 border-b max-w-[220px]" titleText={item.description}>
-                    {item.description}
+                    {item.description && item.description.trim() !== ""
+                      ? item.description
+                      : (
+                        <span className="bg-gray-300 text-gray-700 px-2 py-1 rounded text-xs font-semibold">
+                          Brak opisu
+                        </span>
+                      )
+                    }
                   </TruncatedCell>
                   <td className="px-4 py-2 border-b text-left w-20">{item.instances.length}</td>
                   <td className="px-4 py-2 border-b text-left w-24">
@@ -488,12 +514,14 @@ const EditInventoryItem = () => {
                     </button>
                   </td>
                   <td className="px-4 py-2 border-b text-center w-12">
-                    <span className="text-xl select-none pointer-events-none">
-                      {expanded[idx] ? "▲" : "▼"}
-                    </span>
+                    {item.instances.length > 0 ? (
+                      <span className="text-xl select-none pointer-events-none">
+                        {expanded[idx] ? "▲" : "▼"}
+                      </span>
+                    ) : null}
                   </td>
                 </tr>
-                {expanded[idx] && (
+                {item.instances.length > 0 && expanded[idx] && (
                   <tr>
                     <td colSpan={7} className="bg-gray-100 px-4 py-2">
                       <table className="w-full text-sm">
@@ -518,7 +546,10 @@ const EditInventoryItem = () => {
                                   </span>
                                 </TruncatedCell>
                                 <TruncatedCell className="px-2 py-1 w-1/4 max-w-[180px]" titleText={inst.location}>
-                                  {inst.location}
+                                  {inst.location
+                                    ? <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-semibold">{inst.location}</span>
+                                    : <span className="bg-gray-300 text-gray-700 px-2 py-1 rounded text-xs font-semibold">Brak lokalizacji</span>
+                                  }
                                 </TruncatedCell>
                                 <td className="px-2 py-1 w-24">
                                   <button
@@ -571,6 +602,9 @@ const EditInventoryItem = () => {
                 onSubmit={handleEditSubmit}
                 message={editMessage}
                 count={editItem?.item?.instances?.length}
+                originalManufacturer={editItem?.item?.manufacturer}
+                originalDeviceType={editItem?.item?.device_type}
+                originalModel={editItem?.item?.model}
               />
             ) : (
               <EditInstanceForm

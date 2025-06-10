@@ -5,17 +5,17 @@ const db = require('../db');
 router.get('/stock', (req, res) => {
   const sql = `
     SELECT 
-      ii.id AS instance_id,
-      ii.serial_number,
-      ii.status,
-      ii.location AS instance_location,
       inv.id AS item_id,
       inv.manufacturer,
       inv.device_type,
       inv.model,
-      inv.description
-    FROM item_instances ii
-    JOIN inventory_items inv ON ii.item_id = inv.id
+      inv.description,
+      ii.id AS instance_id,
+      ii.serial_number,
+      ii.status,
+      ii.location AS instance_location
+    FROM inventory_items inv
+    LEFT JOIN item_instances ii ON ii.item_id = inv.id
     ORDER BY inv.manufacturer, inv.model, ii.serial_number
   `;
 
@@ -34,11 +34,13 @@ router.get('/stock', (req, res) => {
           instances: [],
         };
       }
-      grouped[key].instances.push({
-        serial_number: row.serial_number,
-        status: row.status,
-        location: row.instance_location,
-      });
+      if (row.instance_id) {
+        grouped[key].instances.push({
+          serial_number: row.serial_number,
+          status: row.status,
+          location: row.instance_location,
+        });
+      }
     });
 
     const result = Object.values(grouped).map(group => ({
@@ -79,27 +81,42 @@ router.post('/add-instances', (req, res) => {
     return res.status(400).json({ error: "Brak wymaganych danych." });
   }
 
-  const checkSql = `
-    SELECT serial_number FROM item_instances
-    WHERE serial_number IN (${serialNumbers.map(() => '?').join(',')})
-  `;
-  db.query(checkSql, serialNumbers, (err, results) => {
-    if (err) return res.status(500).json({ error: "Błąd serwera przy sprawdzaniu numerów seryjnych." });
-    if (results.length > 0) {
-      const existing = results.map(r => r.serial_number).join(', ');
-      return res.status(400).json({ error: `Numery seryjne już istnieją: ${existing}` });
-    }
+  db.query(
+    "SELECT manufacturer FROM inventory_items WHERE id = ? LIMIT 1",
+    [item_id],
+    (err, results) => {
+      if (err) return res.status(500).json({ error: "Błąd serwera przy pobieraniu producenta." });
+      if (results.length === 0) return res.status(400).json({ error: "Nie znaleziono urządzenia." });
 
-    const values = serialNumbers.map(sn => [item_id, sn, location || null]);
-    const insertSql = `
-      INSERT INTO item_instances (item_id, serial_number, location)
-      VALUES ?
-    `;
-    db.query(insertSql, [values], (err, result) => {
-      if (err) return res.status(500).json({ error: "Błąd serwera przy dodawaniu instancji." });
-      res.json({ success: true, added: result.affectedRows });
-    });
-  });
+      const manufacturer = results[0].manufacturer;
+
+      const checkSql = `
+        SELECT ii.serial_number FROM item_instances ii
+        JOIN inventory_items inv ON ii.item_id = inv.id
+        WHERE inv.manufacturer = ? AND ii.serial_number IN (${serialNumbers.map(() => '?').join(',')})
+      `;
+      db.query(checkSql, [manufacturer, ...serialNumbers], (err, results) => {
+        if (err) return res.status(500).json({ error: "Błąd serwera przy sprawdzaniu numerów seryjnych." });
+        if (results.length > 0) {
+          const existing = results.map(r => r.serial_number);
+          return res.status(400).json({ 
+            error: `Numery seryjne już istnieją dla tego producenta.`,
+            existingSerials: existing
+          });
+        }
+
+        const values = serialNumbers.map(sn => [item_id, sn, location || null]);
+        const insertSql = `
+          INSERT INTO item_instances (item_id, serial_number, location)
+          VALUES ?
+        `;
+        db.query(insertSql, [values], (err, result) => {
+          if (err) return res.status(500).json({ error: "Błąd serwera przy dodawaniu instancji." });
+          res.json({ success: true, added: result.affectedRows });
+        });
+      });
+    }
+  );
 });
 
 router.get('/description', (req, res) => {
@@ -118,30 +135,82 @@ router.get('/description', (req, res) => {
   );
 });
 
-router.post('/edit-item', (req, res) => {
+router.post('/edit-item', async (req, res) => {
   const { old, updated } = req.body;
   if (!old || !updated) {
     return res.status(400).json({ error: "Brak wymaganych danych." });
   }
-  const updateSql = `
-    UPDATE inventory_items
-    SET manufacturer = ?, device_type = ?, model = ?, description = ?
+
+  const checkSql = `
+    SELECT id FROM inventory_items
     WHERE manufacturer = ? AND device_type = ? AND model = ?
+    LIMIT 1
   `;
   db.query(
-    updateSql,
-    [
-      updated.manufacturer,
-      updated.device_type,
-      updated.model,
-      updated.description,
-      old.manufacturer,
-      old.device_type,
-      old.model
-    ],
-    (err, result) => {
-      if (err) return res.status(500).json({ error: "Błąd serwera przy edycji sprzętu." });
-      res.json({ success: true, changedRows: result.changedRows });
+    checkSql,
+    [updated.manufacturer, updated.device_type, updated.model],
+    (err, results) => {
+      if (err) return res.status(500).json({ error: "Błąd serwera przy sprawdzaniu sprzętu." });
+
+      if (
+        results.length > 0 &&
+        (
+          old.manufacturer !== updated.manufacturer ||
+          old.device_type !== updated.device_type ||
+          old.model !== updated.model
+        )
+      ) {
+        const newItemId = results[0].id;
+
+        db.query(
+          "SELECT id FROM inventory_items WHERE manufacturer = ? AND device_type = ? AND model = ? LIMIT 1",
+          [old.manufacturer, old.device_type, old.model],
+          (err2, oldResults) => {
+            if (err2) return res.status(500).json({ error: "Błąd serwera przy pobieraniu starego sprzętu." });
+            if (oldResults.length === 0) return res.status(404).json({ error: "Nie znaleziono starego sprzętu." });
+            const oldItemId = oldResults[0].id;
+
+            db.query(
+              "UPDATE item_instances SET item_id = ? WHERE item_id = ?",
+              [newItemId, oldItemId],
+              (err3) => {
+                if (err3) return res.status(500).json({ error: "Błąd serwera przy przepinaniu egzemplarzy." });
+
+                db.query(
+                  "DELETE FROM inventory_items WHERE id = ?",
+                  [oldItemId],
+                  (err4) => {
+                    if (err4) return res.status(500).json({ error: "Błąd serwera przy usuwaniu starego sprzętu." });
+                    return res.json({ success: true, merged: true });
+                  }
+                );
+              }
+            );
+          }
+        );
+      } else {
+        const updateSql = `
+          UPDATE inventory_items
+          SET manufacturer = ?, device_type = ?, model = ?, description = ?
+          WHERE manufacturer = ? AND device_type = ? AND model = ?
+        `;
+        db.query(
+          updateSql,
+          [
+            updated.manufacturer,
+            updated.device_type,
+            updated.model,
+            updated.description,
+            old.manufacturer,
+            old.device_type,
+            old.model
+          ],
+          (err, result) => {
+            if (err) return res.status(500).json({ error: "Błąd serwera przy edycji sprzętu." });
+            res.json({ success: true, changedRows: result.changedRows });
+          }
+        );
+      }
     }
   );
 });
@@ -151,24 +220,55 @@ router.post('/edit-instance', (req, res) => {
   if (!old_serial_number || !updated) {
     return res.status(400).json({ error: "Brak wymaganych danych." });
   }
-  const updateSql = `
-    UPDATE item_instances
-    SET serial_number = ?, status = ?, location = ?
-    WHERE serial_number = ?
+
+  const getManufacturerSql = `
+    SELECT inv.manufacturer
+    FROM item_instances ii
+    JOIN inventory_items inv ON ii.item_id = inv.id
+    WHERE ii.serial_number = ?
+    LIMIT 1
   `;
-  db.query(
-    updateSql,
-    [
-      updated.serial_number,
-      updated.status,
-      updated.location,
-      old_serial_number
-    ],
-    (err, result) => {
-      if (err) return res.status(500).json({ error: "Błąd serwera przy edycji egzemplarza." });
-      res.json({ success: true, changedRows: result.changedRows });
-    }
-  );
+  db.query(getManufacturerSql, [old_serial_number], (err, results) => {
+    if (err) return res.status(500).json({ error: "Błąd serwera przy pobieraniu producenta." });
+    if (results.length === 0) return res.status(400).json({ error: "Nie znaleziono egzemplarza." });
+
+    const manufacturer = results[0].manufacturer;
+
+    const checkSql = `
+      SELECT ii.serial_number FROM item_instances ii
+      JOIN inventory_items inv ON ii.item_id = inv.id
+      WHERE inv.manufacturer = ? AND ii.serial_number = ? AND ii.serial_number != ?
+      LIMIT 1
+    `;
+    db.query(checkSql, [manufacturer, updated.serial_number, old_serial_number], (err, results) => {
+      if (err) return res.status(500).json({ error: "Błąd serwera przy sprawdzaniu numeru seryjnego." });
+      if (results.length > 0) {
+        return res.status(400).json({
+          error: "Numer seryjny już istnieje dla tego producenta.",
+          existingSerials: [updated.serial_number]
+        });
+      }
+
+      const updateSql = `
+        UPDATE item_instances
+        SET serial_number = ?, status = ?, location = ?
+        WHERE serial_number = ?
+      `;
+      db.query(
+        updateSql,
+        [
+          updated.serial_number,
+          updated.status,
+          updated.location,
+          old_serial_number
+        ],
+        (err, result) => {
+          if (err) return res.status(500).json({ error: "Błąd serwera przy edycji egzemplarza." });
+          res.json({ success: true, changedRows: result.changedRows });
+        }
+      );
+    });
+  });
 });
 
 router.post('/delete-instance', (req, res) => {

@@ -5,7 +5,7 @@ const ManageInventory = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex flex-col items-center bg-gray-100 p-0 pt-10">
+    <div className="flex flex-col items-center bg-gray-100 p-0 pt-10">
       <h1 className="text-3xl font-bold mb-8 mt-4">Zarządzanie stanem magazynowym</h1>
       <div className="flex flex-col md:flex-row gap-8">
         <div

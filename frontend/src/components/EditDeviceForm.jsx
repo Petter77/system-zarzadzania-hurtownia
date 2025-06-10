@@ -1,7 +1,67 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import axios from "axios";
 
-const EditDeviceForm = ({ form, onChange, onCancel, onSubmit, message, count }) => {
+const EditDeviceForm = ({
+  form,
+  onChange,
+  onCancel,
+  onSubmit,
+  message,
+  count,
+  originalManufacturer,
+  originalDeviceType,
+  originalModel
+}) => {
   const descRef = useRef(null);
+  const [descLocked, setDescLocked] = useState(false);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const isOriginal =
+      form.manufacturer === originalManufacturer &&
+      form.device_type === originalDeviceType &&
+      form.model === originalModel;
+
+    if (isOriginal) {
+      setDescLocked(false);
+      return;
+    }
+
+    const fetchDescription = async () => {
+      if (
+        form.manufacturer &&
+        form.device_type &&
+        form.model
+      ) {
+        try {
+          const res = await axios.get("http://localhost:3000/inventory/description", {
+            params: {
+              manufacturer: form.manufacturer,
+              device_type: form.device_type,
+              model: form.model,
+            }
+          });
+          if (!ignore) {
+            if (res.data && res.data.description !== undefined) {
+              setDescLocked(true);
+              if (res.data.description !== form.description) {
+                onChange({ target: { name: "description", value: res.data.description } });
+              }
+            } else {
+              setDescLocked(false);
+            }
+          }
+        } catch {
+          if (!ignore) setDescLocked(false);
+        }
+      } else {
+        setDescLocked(false);
+      }
+    };
+    fetchDescription();
+    return () => { ignore = true; };
+  }, [form.manufacturer, form.device_type, form.model, originalManufacturer, originalDeviceType, originalModel]);
 
   useEffect(() => {
     if (descRef.current) {
@@ -74,7 +134,13 @@ const EditDeviceForm = ({ form, onChange, onCancel, onSubmit, message, count }) 
             overflow: "hidden",
             minHeight: "96px",
           }}
+          disabled={descLocked}
         />
+        {descLocked && (
+          <div className="text-xs text-gray-500 mt-1">
+            Opis został automatycznie uzupełniony na podstawie producenta, typu i modelu i nie można go edytować.
+          </div>
+        )}
       </div>
       {typeof count === "number" && (
         <div className="mt-2 text-blue-700 font-semibold">

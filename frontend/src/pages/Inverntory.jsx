@@ -107,7 +107,7 @@ const Inventory = () => {
   const filteredStock = stock
     .filter(item =>
       (!filters.manufacturer || item.manufacturer?.toLowerCase().startsWith(filters.manufacturer.toLowerCase())) &&
-      (!filters.device_type || item.device_type?.toLowerCase() === filters.device_type.toLowerCase()) &&
+      (!filters.device_type || item.device_type?.toLowerCase().includes(filters.device_type.toLowerCase())) &&
       (!filters.model || item.model?.toLowerCase().startsWith(filters.model.toLowerCase()))
     )
     .map(item => ({
@@ -119,7 +119,6 @@ const Inventory = () => {
         (!filters.serial || (inst.serial_number && inst.serial_number.toLowerCase().startsWith(filters.serial.toLowerCase())))
       )
     }))
-    .filter(item => item.instances.length > 0)
     .sort((a, b) => {
       let aVal = a[sortBy];
       let bVal = b[sortBy];
@@ -179,17 +178,15 @@ const Inventory = () => {
           </div>
           <div className="mb-3">
             <label className="block text-sm font-medium mb-1">Typ urządzenia</label>
-            <select
+            <input
+              type="text"
               name="device_type"
               value={filters.device_type}
               onChange={handleFilterChange}
               className="w-full border rounded px-2 py-1"
-            >
-              <option value="">Wszystkie</option>
-              <option value="switch">Switch</option>
-              <option value="router">Router</option>
-              <option value="access point">Access Point</option>
-            </select>
+              placeholder="np. switch"
+              autoComplete="off"
+            />
           </div>
           <div className="mb-3">
             <label className="block text-sm font-medium mb-1">Model</label>
@@ -306,11 +303,13 @@ const Inventory = () => {
             {filteredStock.map((item, idx) => (
               <React.Fragment key={item.manufacturer + item.model}>
                 <tr
-                  className={`bg-white transition-colors cursor-pointer ${
-                    showFilters ? "hover:bg-gray-200" : "hover:bg-blue-50"
+                  className={`bg-white transition-colors ${
+                    item.instances.length > 0
+                      ? "cursor-pointer " + (showFilters ? "hover:bg-gray-200" : "hover:bg-blue-50")
+                      : "cursor-default"
                   }`}
                   onClick={() => {
-                    toggleExpand(idx);
+                    if (item.instances.length > 0) toggleExpand(idx);
                   }}
                 >
                   <TruncatedCell className="px-4 py-2 border-b max-w-[180px]" titleText={item.manufacturer}>
@@ -329,20 +328,25 @@ const Inventory = () => {
                     )}
                   </TruncatedCell>
                   <TruncatedCell className="px-4 py-2 border-b max-w-[220px]" titleText={item.description}>
-                    {item.description ?? (
-                      <span className="bg-gray-300 text-gray-700 px-2 py-1 rounded text-xs font-semibold">
-                        Brak opisu
-                      </span>
-                    )}
+                    {item.description && item.description.trim() !== ""
+                      ? item.description
+                      : (
+                        <span className="bg-gray-300 text-gray-700 px-2 py-1 rounded text-xs font-semibold">
+                          Brak opisu
+                        </span>
+                      )
+                    }
                   </TruncatedCell>
                   <td className="px-4 py-2 border-b text-left w-20">{item.instances.length}</td>
                   <td className="px-4 py-2 border-b text-center w-12">
-                    <span className="text-xl select-none pointer-events-none">
-                      {expanded[idx] ? "▲" : "▼"}
-                    </span>
+                    {item.instances.length > 0 ? (
+                      <span className="text-xl select-none pointer-events-none">
+                        {expanded[idx] ? "▲" : "▼"}
+                      </span>
+                    ) : null}
                   </td>
                 </tr>
-                {expanded[idx] && (
+                {item.instances.length > 0 && expanded[idx] && (
                   <tr>
                     <td colSpan={6} className="bg-gray-100 px-4 py-2">
                       <table className="w-full text-sm">
