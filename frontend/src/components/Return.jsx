@@ -47,7 +47,7 @@ const Return = ({ setIsReturnFormOpen, handleReturnInvoiceSuccess, borrowedItems
       <div className="bg-white border border-gray-300 shadow-lg p-10 rounded-md w-[960px] relative flex flex-col max-h-[90vh] overflow-auto">
         <button
           onClick={() => setIsReturnFormOpen(false)}
-          className="absolute top-6 right-6 text-red-600 font-bold hover:text-red-800"
+          className="absolute top-6 right-6 text-red-600 font-bold hover:text-red-800 text-lg"
         >
           Zamknij
         </button>
@@ -101,7 +101,7 @@ const Return = ({ setIsReturnFormOpen, handleReturnInvoiceSuccess, borrowedItems
               className={`px-6 py-3 text-white font-semibold rounded-md shadow transition ${
                 loading
                   ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700'
+                  : 'bg-blue-500 hover:bg-blue-600'
               }`}
             >
               {loading ? 'Przetwarzanie...' : 'Zatwierdź Zwrot'}
