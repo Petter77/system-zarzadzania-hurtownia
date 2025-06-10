@@ -81,7 +81,7 @@ router.post('/toService', (req, res) => {
 
     const updateQuery = `
       UPDATE item_instances
-      SET status = 'to_service'    -- <- zmieniono status na 'to_service'
+      SET status = 'damaged'    -- <- zmieniono status na 'to_service'
       WHERE id IN (${item_ids.map(() => '?').join(',')})
     `;
 
@@ -189,7 +189,7 @@ router.get('/borrowed', (req, res) => {
       inv.manufacturer, 
       inv.model, 
       inv.description,
-      ii.serial_number,
+      ii.serial_number
     FROM 
       item_instances AS ii
     JOIN 
