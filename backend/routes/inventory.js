@@ -13,9 +13,12 @@ router.get('/stock', (req, res) => {
       ii.id AS instance_id,
       ii.serial_number,
       ii.status,
-      ii.location AS instance_location
+      ii.location AS instance_location,
+      invc.number AS invoice_number
     FROM inventory_items inv
     LEFT JOIN item_instances ii ON ii.item_id = inv.id
+    LEFT JOIN invoice_items iit ON iit.instance_id = ii.id
+    LEFT JOIN invoices invc ON invc.id = iit.invoice_id
     ORDER BY inv.manufacturer, inv.model, ii.serial_number
   `;
 
@@ -39,6 +42,7 @@ router.get('/stock', (req, res) => {
           serial_number: row.serial_number,
           status: row.status,
           location: row.instance_location,
+          invoice: row.invoice_number || "",
         });
       }
     });
@@ -76,7 +80,7 @@ router.post('/add-item', (req, res) => {
 });
 
 router.post('/add-instances', (req, res) => {
-  const { item_id, serialNumbers, location } = req.body;
+  const { item_id, serialNumbers, location, invoice } = req.body;
   if (!item_id || !serialNumbers || !Array.isArray(serialNumbers) || serialNumbers.length === 0) {
     return res.status(400).json({ error: "Brak wymaganych danych." });
   }
@@ -100,7 +104,7 @@ router.post('/add-instances', (req, res) => {
         if (results.length > 0) {
           const existing = results.map(r => r.serial_number);
           return res.status(400).json({ 
-            error: `Numery seryjne już istnieją dla tego producenta.`,
+            error: `Urządzenie o takich numerach seryjnych już istnieje.`,
             existingSerials: existing
           });
         }
@@ -112,7 +116,39 @@ router.post('/add-instances', (req, res) => {
         `;
         db.query(insertSql, [values], (err, result) => {
           if (err) return res.status(500).json({ error: "Błąd serwera przy dodawaniu instancji." });
-          res.json({ success: true, added: result.affectedRows });
+
+          if (invoice) {
+            db.query(
+              "SELECT id FROM invoices WHERE number = ? LIMIT 1",
+              [invoice],
+              (err2, invoiceRows) => {
+                if (err2) return res.status(500).json({ error: "Błąd serwera przy sprawdzaniu faktury." });
+                if (invoiceRows.length === 0) return res.json({ success: true, added: result.affectedRows });
+
+                const invoiceId = invoiceRows[0].id;
+                db.query(
+                  "SELECT id FROM item_instances WHERE item_id = ? AND serial_number IN (" + serialNumbers.map(() => '?').join(',') + ")",
+                  [item_id, ...serialNumbers],
+                  (err3, instanceRows) => {
+                    if (err3) return res.status(500).json({ error: "Błąd serwera przy pobieraniu instancji do faktury." });
+                    if (instanceRows.length === 0) return res.json({ success: true, added: result.affectedRows });
+
+                    const invoiceItemsValues = instanceRows.map(inst => [invoiceId, inst.id]);
+                    db.query(
+                      "INSERT INTO invoice_items (invoice_id, instance_id) VALUES ?",
+                      [invoiceItemsValues],
+                      (err4) => {
+                        if (err4) return res.status(500).json({ error: "Błąd serwera przy dodawaniu do invoice_items." });
+                        res.json({ success: true, added: result.affectedRows });
+                      }
+                    );
+                  }
+                );
+              }
+            );
+          } else {
+            res.json({ success: true, added: result.affectedRows });
+          }
         });
       });
     }
@@ -278,69 +314,114 @@ router.post('/edit-instance', (req, res) => {
         });
       }
 
-      const updateSql = `
-        UPDATE item_instances
-        SET serial_number = ?, status = ?, location = ?
-        WHERE serial_number = ?
-      `;
-      db.query(
-        updateSql,
-        [
-          updated.serial_number,
-          updated.status,
-          updated.location,
-          old_serial_number
-        ],
-        (err, result) => {
-          if (err) return res.status(500).json({ error: "Błąd serwera przy edycji egzemplarza." });
-          res.json({ success: true, changedRows: result.changedRows });
-        }
-      );
+      if (updated.invoice) {
+        db.query(
+          "SELECT id FROM invoices WHERE number = ? LIMIT 1",
+          [updated.invoice],
+          (err2, invoiceRows) => {
+            if (err2) return res.status(500).json({ error: "Błąd serwera przy sprawdzaniu faktury." });
+            if (invoiceRows.length === 0) return res.status(400).json({ error: "Faktura nie istnieje w bazie." });
+
+            updateInstance(invoiceRows[0].id);
+          }
+        );
+      } else {
+        updateInstance(null);
+      }
+
+      function updateInstance(invoiceId) {
+        const updateSql = `
+          UPDATE item_instances
+          SET serial_number = ?, status = ?, location = ?
+          WHERE serial_number = ?
+        `;
+        db.query(
+          updateSql,
+          [
+            updated.serial_number,
+            updated.status,
+            updated.location,
+            old_serial_number
+          ],
+          (err, result) => {
+            if (err) return res.status(500).json({ error: "Błąd serwera przy edycji egzemplarza." });
+
+            db.query(
+              "SELECT id FROM item_instances WHERE serial_number = ? LIMIT 1",
+              [updated.serial_number],
+              (err2, instRows) => {
+                if (err2 || instRows.length === 0) return res.json({ success: true, changedRows: result.changedRows });
+                const instanceId = instRows[0].id;
+
+                if (invoiceId) {
+                  db.query(
+                    "DELETE FROM invoice_items WHERE instance_id = ?",
+                    [instanceId],
+                    () => {
+                      db.query(
+                        "INSERT INTO invoice_items (invoice_id, instance_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE invoice_id = VALUES(invoice_id)",
+                        [invoiceId, instanceId],
+                        () => res.json({ success: true, changedRows: result.changedRows })
+                      );
+                    }
+                  );
+                } else {
+                  db.query(
+                    "DELETE FROM invoice_items WHERE instance_id = ?",
+                    [instanceId],
+                    () => res.json({ success: true, changedRows: result.changedRows })
+                  );
+                }
+              }
+            );
+          }
+        );
+      }
     });
   });
 });
 
-router.post('/delete-instance', (req, res) => {
+router.get('/invoices', (req, res) => {
+  db.query("SELECT number FROM invoices ORDER BY number", (err, results) => {
+    if (err) return res.status(500).json({ error: "Błąd pobierania faktur" });
+    res.json(results.map(r => r.number));
+  });
+});
+
+router.post('/archive-instance', (req, res) => {
   const { serial_number } = req.body;
   if (!serial_number) {
     return res.status(400).json({ error: "Brak numeru seryjnego." });
   }
-  const deleteSql = `DELETE FROM item_instances WHERE serial_number = ?`;
-  db.query(deleteSql, [serial_number], (err, result) => {
-    if (err) return res.status(500).json({ error: "Błąd serwera przy usuwaniu egzemplarza." });
+  const updateSql = `
+    UPDATE item_instances
+    SET status = 'archived', location = 'Archive'
+    WHERE serial_number = ?
+  `;
+  db.query(updateSql, [serial_number], (err, result) => {
+    if (err) return res.status(500).json({ error: "Błąd serwera przy archiwizacji egzemplarza." });
     res.json({ success: true, affectedRows: result.affectedRows });
   });
 });
 
-router.post('/delete-device', (req, res) => {
+router.post('/archive-device', (req, res) => {
   const { manufacturer, device_type, model } = req.body;
   if (!manufacturer || !device_type || !model) {
     return res.status(400).json({ error: "Brak wymaganych danych." });
   }
-  db.query(
-    "SELECT id FROM inventory_items WHERE manufacturer = ? AND device_type = ? AND model = ? LIMIT 1",
-    [manufacturer, device_type, model],
-    (err, results) => {
-      if (err) return res.status(500).json({ error: "Błąd serwera." });
-      if (results.length === 0) return res.status(404).json({ error: "Nie znaleziono urządzenia." });
-      const itemId = results[0].id;
-      db.query(
-        "DELETE FROM item_instances WHERE item_id = ?",
-        [itemId],
-        (err) => {
-          if (err) return res.status(500).json({ error: "Błąd serwera przy usuwaniu egzemplarzy." });
-          db.query(
-            "DELETE FROM inventory_items WHERE id = ?",
-            [itemId],
-            (err2, result2) => {
-              if (err2) return res.status(500).json({ error: "Błąd serwera przy usuwaniu sprzętu." });
-              res.json({ success: true, affectedRows: result2.affectedRows });
-            }
-          );
-        }
-      );
-    }
-  );
+  const updateSql = `
+    UPDATE item_instances
+    SET status = 'archived', location = 'Archive'
+    WHERE item_id = (
+      SELECT id FROM inventory_items
+      WHERE manufacturer = ? AND device_type = ? AND model = ?
+      LIMIT 1
+    )
+  `;
+  db.query(updateSql, [manufacturer, device_type, model], (err, result) => {
+    if (err) return res.status(500).json({ error: "Błąd serwera przy archiwizacji egzemplarzy sprzętu." });
+    res.json({ success: true, affectedRows: result.affectedRows });
+  });
 });
 
 module.exports = router;

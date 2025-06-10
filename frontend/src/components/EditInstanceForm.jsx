@@ -6,11 +6,13 @@ const EditInstanceForm = ({
   onCancel,
   onSubmit,
   message,
-  device
+  device,
+  invoices = []
 }) => {
   const descRef = useRef(null);
   const [serialError, setSerialError] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [invoiceError, setInvoiceError] = useState(false);
 
   useEffect(() => {
     if (descRef.current) {
@@ -33,8 +35,12 @@ const EditInstanceForm = ({
     } else if (typeof message === "string" && message.includes("Zapisano zmiany")) {
       setShowSuccess(true);
       setSerialError(false);
+    } else if (typeof message === "string" && message.includes("Faktura nie istnieje")) {
+      setInvoiceError(true);
+      setShowSuccess(false);
     } else {
       setShowSuccess(false);
+      setInvoiceError(false);
     }
   }, [message]);
 
@@ -49,6 +55,11 @@ const EditInstanceForm = ({
       {serialError && (
         <div className="mb-2 text-red-600">
           Numer seryjny już istnieje dla tego producenta.
+        </div>
+      )}
+      {invoiceError && (
+        <div className="mb-2 text-red-600">
+          Faktura nie istnieje w systemie.
         </div>
       )}
       {showSuccess && (
@@ -126,8 +137,22 @@ const EditInstanceForm = ({
           <option value="available">Dostępny</option>
           <option value="borrowed">Wypożyczony</option>
           <option value="damaged">Uszkodzony</option>
-          <option value="archived">Zarchiwizowany</option>
         </select>
+      </div>
+      <div>
+        <label className="block font-medium mb-1">Faktura</label>
+        <input
+          type="text"
+          name="invoice"
+          value={form.invoice || ""}
+          onChange={onChange}
+          className={`w-full border rounded px-2 py-1 ${invoiceError ? "border-red-500" : ""}`}
+          placeholder="np. FV/2025/001"
+          maxLength={100}
+        />
+        <div className="text-xs text-gray-500 mt-1">
+          Pozostaw puste lub wpisz istniejący numer faktury.
+        </div>
       </div>
       <div>
         <label className="block font-medium mb-1">Lokalizacja</label>

@@ -8,6 +8,7 @@ const AddInventoryItem = () => {
     model: "",
     description: "",
     location: "",
+    invoice: "",
     serialNumbers: [""],
   });
   const [message, setMessage] = useState(null);
@@ -15,6 +16,7 @@ const AddInventoryItem = () => {
   const [lastFetched, setLastFetched] = useState({ manufacturer: "", device_type: "", model: "" });
   const [lastFetchedDesc, setLastFetchedDesc] = useState(undefined);
   const [serialErrors, setSerialErrors] = useState([]);
+  const [invoices, setInvoices] = useState([]);
   const descRef = useRef(null);
   const addButtonRef = useRef(null);
 
@@ -26,12 +28,9 @@ const AddInventoryItem = () => {
   }, [form.description, descLocked]);
 
   useEffect(() => {
-    document.body.style.overflowY = "";
-    document.documentElement.style.overflowY = "";
-    return () => {
-      document.body.style.overflowY = "";
-      document.documentElement.style.overflowY = "";
-    };
+    axios.get("http://localhost:3000/inventory/invoices")
+      .then(res => setInvoices(res.data))
+      .catch(() => setInvoices([]));
   }, []);
 
   const fetchDescription = async (manufacturer, device_type, model) => {
@@ -142,6 +141,11 @@ const AddInventoryItem = () => {
       return;
     }
 
+    if (form.invoice && !invoices.includes(form.invoice)) {
+      setMessage("Podany numer faktury nie istnieje w systemie.");
+      return;
+    }
+
     try {
       const res = await axios.post("http://localhost:3000/inventory/add-item", {
         manufacturer: form.manufacturer,
@@ -155,6 +159,7 @@ const AddInventoryItem = () => {
         item_id: itemId,
         serialNumbers: serials,
         location: form.location,
+        invoice: form.invoice || null,
       });
 
       setMessage("Sprzęt został dodany!");
@@ -164,6 +169,7 @@ const AddInventoryItem = () => {
         model: "",
         description: "",
         location: "",
+        invoice: "",
         serialNumbers: [""],
       });
       setDescLocked(false);
@@ -193,6 +199,18 @@ const AddInventoryItem = () => {
     }
   };
 
+  const isErrorMessage = (msg) => {
+    if (!msg) return false;
+    const lower = msg.toLowerCase();
+    return (
+      lower.includes("błąd") ||
+      lower.includes("nie istnieje") ||
+      lower.includes("unikalne") ||
+      lower.includes("istnieją") ||
+      lower.includes("urządzenie o takich numerach seryjnych")
+    );
+  };
+
   return (
     <div className="flex flex-col items-center justify-start bg-gray-100 p-0">
       <h1 className="text-2xl font-bold mb-6 mt-10">Dodaj sprzęt do magazynu</h1>
@@ -201,7 +219,13 @@ const AddInventoryItem = () => {
         className="bg-white rounded shadow p-6 w-full max-w-lg space-y-4 mb-16"
       >
         {message && (
-          <div className="text-center text-sm font-semibold text-blue-600 mb-2">{message}</div>
+          <div
+            className={`text-center text-sm font-semibold mb-2 ${
+              isErrorMessage(message) ? "text-red-600" : "text-blue-600"
+            }`}
+          >
+            {message}
+          </div>
         )}
         <div>
           <label className="block font-medium mb-1">Producent</label>
@@ -258,6 +282,19 @@ const AddInventoryItem = () => {
               ...((descLocked || lastFetchedDesc !== undefined) ? { backgroundColor: "#f3f4f6", color: "#6b7280" } : {}),
               overflow: "hidden"
             }}
+          />
+        </div>
+        <div>
+          <label className="block font-medium mb-1">Faktura</label>
+          <input
+            type="text"
+            name="invoice"
+            value={form.invoice}
+            onChange={handleChange}
+            className="w-full border rounded px-2 py-1"
+            placeholder="np. FV/2023/001"
+            maxLength={100}
+            autoComplete="off"
           />
         </div>
         <div>
