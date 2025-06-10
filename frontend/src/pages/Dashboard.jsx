@@ -6,7 +6,7 @@ import { FaWarehouse, FaBoxes, FaExchangeAlt, FaUsersCog, FaFileAlt, FaFileInvoi
 const iconMap = {
   "Stan magazynowy": <FaWarehouse className="text-5xl mb-4 text-blue-600" />,
   "Zarządzanie stanem magazynowym": <FaBoxes className="text-5xl mb-4 text-green-600" />,
-  "System przyjęć / wydań": <FaExchangeAlt className="text-5xl mb-4 text-yellow-600" />,
+  "System przyjęć/wydań": <FaExchangeAlt className="text-5xl mb-4 text-yellow-600" />,
   "Zarządzanie pracownikami": <FaUsersCog className="text-5xl mb-4 text-purple-600" />,
   "Raporty": <FaFileAlt className="text-5xl mb-4 text-gray-600" />,
   "Faktury": <FaFileInvoice className="text-5xl mb-4 text-indigo-600" />,
@@ -16,8 +16,8 @@ const iconMap = {
 const Dashboard = () => {
   const [userRole, setUserRole] = useState(null);
   const panelTitles = {
-    'user': ['Stan magazynowy', 'Zarządzanie stanem magazynowym', 'System przyjęć / wydań'],
-    'manager': ['Stan magazynowy', 'Zarządzanie stanem magazynowym', 'System przyjęć / wydań', 'Zarządzanie pracownikami', 'Raporty', 'Faktury'],
+    'user': ['Stan magazynowy', 'Zarządzanie stanem magazynowym', 'System przyjęć/wydań'],
+    'manager': ['Stan magazynowy', 'Zarządzanie stanem magazynowym', 'System przyjęć/wydań', 'Zarządzanie pracownikami', 'Raporty', 'Faktury'],
     'auditor': ['Dokonaj audytu']
   };
 
@@ -48,7 +48,7 @@ const Dashboard = () => {
       case 'Zarządzanie stanem magazynowym':
         route = '/manageInventory';
         break;
-      case 'System przyjęć / wydań':
+      case 'System przyjęć/wydań':
         route = '/transactions';
         break;
       case 'Zarządzanie pracownikami':
