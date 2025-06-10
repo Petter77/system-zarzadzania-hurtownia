@@ -33,6 +33,36 @@ const Invoices = () => {
     fetchInvoices();
   }, []);
 
+  const handleFileUpload = async (e) => {
+  const file = e.target.files[0];
+
+  if (!file || file.type !== "application/pdf") {
+    alert("Wybierz plik PDF.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("pdf", file);
+
+  try {
+    const response = await axios.post(
+      "http://localhost:3000/invoices/upload-pdf",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    alert(`Faktura utworzona. ID: ${response.data.invoiceId}`);
+    console.log("Odpowiedź:", response.data);
+  } catch (error) {
+    console.error("Błąd podczas wysyłania pliku PDF:", error);
+    alert("Nie udało się przesłać pliku.");
+  }
+};
+
+
   if (loading) return <div>Ładowanie...</div>;
 
   return (
@@ -45,6 +75,12 @@ const Invoices = () => {
       >
         Dodaj Fakturę
       </button>
+      <input
+        type="file"
+        accept="application/pdf"
+        onChange={handleFileUpload}
+        className="ml-4 mb-4 px-4 py-2 text-sm"
+      />
 
       {isCreateFormOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-30 z-50">

@@ -1,6 +1,39 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const multer = require('multer');
+
+
+
+const upload = multer({ storage: multer.memoryStorage() });
+
+//save pdf in database
+router.post('/upload-pdf', upload.single('pdf'), (req, res) => {
+  const fileBuffer = req.file?.buffer;
+
+  if (!fileBuffer) {
+    return res.status(400).json({ error: 'Nie przesłano pliku PDF.' });
+  }
+
+  const now = new Date();
+
+  const query = `
+    INSERT INTO invoices (issued_at, pdf)
+    VALUES (?, ?)
+  `;
+
+  db.query(query, [now, fileBuffer], (err, result) => {
+    if (err) {
+      console.error("Błąd podczas zapisywania faktury z PDF:", err);
+      return res.status(500).json({ error: 'Błąd serwera.' });
+    }
+
+    res.status(201).json({
+      message: 'Faktura z PDF została utworzona.',
+      invoiceId: result.insertId,
+    });
+  });
+});
 
 
 // get all invoices
@@ -169,6 +202,34 @@ router.get('/:number', (req, res) => {
       res.status(200).json(invoice);
     });
   });
+
+  const handleFileUpload = async (e) => {
+  const file = e.target.files[0];
+  if (!file || file.type !== "application/pdf") {
+    alert("Wybierz plik PDF.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("pdf", file); // "pdf" to nazwa pola, którą Twój backend powinien obsłużyć
+
+  try {
+    const response = await axios.post(
+      "http://localhost:3000/invoices/upload-pdf",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    alert("Plik PDF został przesłany pomyślnie.");
+    console.log("Odpowiedź:", response.data);
+  } catch (error) {
+    console.error("Błąd podczas wysyłania pliku PDF:", error);
+    alert("Nie udało się przesłać pliku.");
+  }
+};
   
   
 

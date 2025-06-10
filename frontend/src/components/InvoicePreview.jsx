@@ -1,4 +1,18 @@
 import React from "react";
+import { PDFDownloadLink, pdf } from "@react-pdf/renderer";
+import { InvoicePDFDocument } from "./InvoicePDFDocument"; // dopasuj ścieżkę
+
+const downloadPdfInvoice = async (invoice) => {
+  const blob = await pdf(<InvoicePDFDocument invoice={invoice} />).toBlob();
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `faktura-${invoice.number}.pdf`;
+  a.click();
+
+  URL.revokeObjectURL(url);
+};
 
 // Funkcja do generowania i pobierania pliku .txt
 const downloadTxtInvoice = (invoice) => {
@@ -106,6 +120,12 @@ const InvoicePreview = ({ invoice, onClose }) => {
           className="mt-6 self-end bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
         >
           Pobierz jako TXT
+        </button>
+        <button
+          onClick={() => downloadPdfInvoice(invoice)}
+          className="mt-2 self-end bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700"
+        >
+          Pobierz jako PDF
         </button>
         
       </div>
