@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 
-const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
+const CreateInvoice = ({ setIsCreateFormOpen, onInvoiceCreated }) => {
   const [formData, setFormData] = useState({
     number: "",
     issued_at: "",
@@ -82,7 +82,8 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
         products: [{ instance_id: "", price: "" }],
       });
 
-      if (handleCreateInvoiceSuccess) handleCreateInvoiceSuccess();
+      if (onInvoiceCreated) onInvoiceCreated(); // 🔄 Odśwież listę faktur w Invoices.jsx
+      setIsCreateFormOpen(false); // 🧼 Zamknij formularz
     } catch (err) {
       console.error(err);
       const errorMsg = err.response?.data?.error || "Błąd podczas tworzenia faktury.";
@@ -94,79 +95,75 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
     (acc, item) => acc + (parseFloat(item.price) || 0),
     0
   );
-  
+
   const handleFileUpload = (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
+    const file = event.target.files[0];
+    if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const content = e.target.result;
-    const lines = content.split("\n").map((line) => line.trim());
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target.result;
+      const lines = content.split("\n").map((line) => line.trim());
 
-    const newForm = {
-      number: "",
-      issued_at: "",
-      recipient_name: "",
-      recipient_address: "",
-      recipient_nip: "",
-      products: [],
+      const newForm = {
+        number: "",
+        issued_at: "",
+        recipient_name: "",
+        recipient_address: "",
+        recipient_nip: "",
+        products: [],
+      };
+
+      let mode = null;
+
+      lines.forEach((line) => {
+        if (line.startsWith("Faktura nr:")) {
+          newForm.number = line.split("Faktura nr:")[1].trim();
+        } else if (line.startsWith("Data wystawienia:")) {
+          const date = line.split("Data wystawienia:")[1].trim();
+          newForm.issued_at = new Date(date).toISOString().slice(0, 10);
+        } else if (line.startsWith("Nabywca:")) {
+          mode = "nabywca";
+        } else if (line.startsWith("Produkty:")) {
+          mode = "produkty";
+        } else if (line.startsWith("Sprzedawca:") || line.startsWith("Do zapłaty:")) {
+          mode = null;
+        } else if (mode === "nabywca") {
+          if (!newForm.recipient_name) {
+            newForm.recipient_name = line;
+          } else if (!newForm.recipient_address) {
+            newForm.recipient_address = line;
+          } else if (!newForm.recipient_nip) {
+            newForm.recipient_nip = line;
+          }
+        } else if (mode === "produkty") {
+          const match = line.match(/^\d+\.\s+(.+)\s+-\s+(\d+(\.\d+)?)\s+zł$/);
+          if (match) {
+            const description = match[1];
+            const price = parseFloat(match[2]);
+
+            const matched = items.find(
+              (i) => `${i.manufacturer} ${i.model}` === description
+            );
+
+            newForm.products.push({
+              instance_id: matched ? matched.instance_id : "",
+              price: price.toFixed(2),
+            });
+          }
+        }
+      });
+
+      setFormData((prev) => ({
+        ...prev,
+        ...newForm,
+      }));
+
+      setMessage("Dane z pliku zostały wczytane.");
     };
 
-    let mode = null; // null | 'nabywca' | 'produkty'
-
-    lines.forEach((line) => {
-      if (line.startsWith("Faktura nr:")) {
-        newForm.number = line.split("Faktura nr:")[1].trim();
-      } else if (line.startsWith("Data wystawienia:")) {
-        const date = line.split("Data wystawienia:")[1].trim();
-        newForm.issued_at = new Date(date).toISOString().slice(0, 10);
-      } else if (line.startsWith("Nabywca:")) {
-        mode = "nabywca";
-      } else if (line.startsWith("Produkty:")) {
-        mode = "produkty";
-      } else if (line.startsWith("Sprzedawca:")) {
-        mode = null; // pomijamy dane sprzedawcy
-      } else if (line.startsWith("Do zapłaty:")) {
-        mode = null;
-      } else if (mode === "nabywca") {
-        if (!newForm.recipient_name) {
-          newForm.recipient_name = line;
-        } else if (!newForm.recipient_address) {
-          newForm.recipient_address = line;
-        } else if (!newForm.recipient_nip) {
-          newForm.recipient_nip = line;
-        }
-      } else if (mode === "produkty") {
-        const match = line.match(/^\d+\.\s+(.+)\s+-\s+(\d+(\.\d+)?)\s+zł$/);
-        if (match) {
-          const description = match[1];
-          const price = parseFloat(match[2]);
-
-          const matched = items.find(
-            (i) => `${i.manufacturer} ${i.model}` === description
-          );
-
-          newForm.products.push({
-            instance_id: matched ? matched.instance_id : "",
-            price: price.toFixed(2),
-          });
-        }
-      }
-    });
-
-    setFormData((prev) => ({
-      ...prev,
-      ...newForm,
-    }));
-
-    setMessage("Dane z pliku zostały wczytane.");
+    reader.readAsText(file);
   };
-
-  reader.readAsText(file);
-};
-
-
 
   return (
     <div className="flex justify-center bg-gray-100 py-20 px-4">
@@ -317,8 +314,6 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
         {message && (
           <p className="text-center text-red-500 font-semibold mb-6">{message}</p>
         )}
-
-        
 
         <button
           type="submit"

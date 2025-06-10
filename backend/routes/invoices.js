@@ -10,19 +10,20 @@ const upload = multer({ storage: multer.memoryStorage() });
 //save pdf in database
 router.post('/upload-pdf', upload.single('pdf'), (req, res) => {
   const fileBuffer = req.file?.buffer;
+  const number = req.body.number;
 
-  if (!fileBuffer) {
-    return res.status(400).json({ error: 'Nie przesłano pliku PDF.' });
+  if (!fileBuffer || !number) {
+    return res.status(400).json({ error: 'Numer faktury i plik PDF są wymagane.' });
   }
 
   const now = new Date();
 
   const query = `
-    INSERT INTO invoices (issued_at, pdf)
-    VALUES (?, ?)
+    INSERT INTO invoices (number, issued_at, pdf)
+    VALUES (?, ?, ?)
   `;
 
-  db.query(query, [now, fileBuffer], (err, result) => {
+  db.query(query, [number, now, fileBuffer], (err, result) => {
     if (err) {
       console.error("Błąd podczas zapisywania faktury z PDF:", err);
       return res.status(500).json({ error: 'Błąd serwera.' });
@@ -35,29 +36,54 @@ router.post('/upload-pdf', upload.single('pdf'), (req, res) => {
   });
 });
 
+router.get('/pdf/:id', (req, res) => {
+  const invoiceId = req.params.id;
+
+  const query = 'SELECT number, pdf FROM invoices WHERE id = ? LIMIT 1';
+
+  db.query(query, [invoiceId], (err, results) => {
+    if (err) {
+      console.error('Błąd przy pobieraniu PDF:', err);
+      return res.status(500).json({ error: 'Błąd serwera.' });
+    }
+
+    if (results.length === 0 || !results[0].pdf) {
+      return res.status(404).json({ error: 'Plik PDF nie został znaleziony.' });
+    }
+
+    const invoice = results[0];
+    const pdfBuffer = invoice.pdf;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${invoice.number}.pdf"`); // lub attachment
+    res.send(pdfBuffer);
+  });
+});
+
 
 // get all invoices
 router.get('/all', (req, res) => {
-    const query = `
-        SELECT 
-            invoices.id,
-            invoices.number, 
-            invoices.issued_at,
-            recipient_name
-        FROM invoices 
-        ORDER BY invoices.number;
-    `;
+  const query = `
+    SELECT 
+      invoices.id,
+      invoices.number, 
+      invoices.issued_at,
+      recipient_name,
+      CASE WHEN invoices.pdf IS NOT NULL THEN 1 ELSE 0 END AS has_pdf
+    FROM invoices 
+    ORDER BY invoices.number;
+  `;
 
-    db.query(query, (err, results) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json({ error: 'Błąd serwera' });
-        }
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Błąd serwera' });
+    }
 
-        // Nie trzeba grupować, jeśli każdy rekord to jedna faktura
-        res.status(200).json(results);
-    });
+    res.status(200).json(results);
+  });
 });
+
 
 
 // create invoice
