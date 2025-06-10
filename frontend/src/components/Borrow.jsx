@@ -41,7 +41,7 @@ const Borrow = ({ setIsBorrowFormOpen, availableItems }) => {
       <div className="bg-white border border-gray-300 shadow-lg p-10 rounded-md w-[960px] relative flex flex-col max-h-[90vh] overflow-auto">
         <button
           onClick={() => setIsBorrowFormOpen(false)}
-          className="absolute top-6 right-6 text-red-600 font-bold hover:text-red-800"
+          className="absolute top-6 right-6 text-red-600 font-bold hover:text-red-800 text-lg"
         >
           Zamknij
         </button>
