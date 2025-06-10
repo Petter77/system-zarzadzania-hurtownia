@@ -111,8 +111,6 @@ const Return = ({ setIsReturnFormOpen, handleReturnInvoiceSuccess, borrowedItems
             </button>
           </div>
         </form>
-      </div>
-    </form>
   </div>
 </div>
 
