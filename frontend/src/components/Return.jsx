@@ -47,53 +47,56 @@ const Return = ({ setIsReturnFormOpen, handleReturnInvoiceSuccess, borrowedItems
       <div className="bg-white border border-gray-300 shadow-lg p-10 rounded-md w-[960px] relative flex flex-col max-h-[90vh] overflow-auto">
         <button
           onClick={() => setIsReturnFormOpen(false)}
-          className="absolute top-6 right-6 text-red-600 font-bold hover:text-red-800"
+          className="absolute top-6 right-6 text-red-600 font-bold hover:text-red-800 text-lg"
         >
           Zamknij
         </button>
 
-        <h2 className="text-3xl font-bold text-blue-700 mb-6">Zwróć wypożyczone urządzenia</h2>
+    <h2 className="text-3xl font-bold text-blue-700 mb-6">Zwróć wypożyczone urządzenia</h2>
 
-        {error && (
-          <div className="text-red-600 font-semibold mb-4">{error}</div>
-        )}
+    {error && (
+      <div className="text-red-600 font-semibold mb-4">{error}</div>
+    )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <table className="w-full text-sm text-left border border-gray-300">
-            <thead className="bg-gray-100">
+    <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+      <div className="overflow-auto flex-1 border border-gray-200 rounded-md">
+        <table className="min-w-full text-sm text-left">
+          <thead className="bg-gray-100 sticky top-0 z-10">
+            <tr>
+              <th className="px-4 py-2">Zaznacz</th>
+              <th className="px-4 py-2">Producent</th>
+              <th className="px-4 py-2">Model</th>
+              <th className="px-4 py-2">Numer Seryjny</th>
+              <th className="px-4 py-2">Opis</th>
+            </tr>
+          </thead>
+          <tbody>
+            {borrowedItems.length === 0 ? (
               <tr>
-                <th className="px-4 py-2">Zaznacz</th>
-                <th className="px-4 py-2">Producent</th>
-                <th className="px-4 py-2">Model</th>
-                <th className="px-4 py-2">Opis</th>
+                <td colSpan="5" className="text-center py-6 text-gray-500 italic">
+                  Brak dostępnych urządzeń do zwrotu.
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {borrowedItems.length > 0 ? (
-                borrowedItems.map((item) => (
-                  <tr key={item.id} className="border-t border-gray-200">
-                    <td className="px-4 py-2 text-center">
-                      <input
-                        type="checkbox"
-                        checked={!!selectedItems[item.id]}
-                        onChange={() => handleCheckboxChange(item.id)}
-                      />
-                    </td>
-                    <td className="px-4 py-2">{item.manufacturer}</td>
-                    <td className="px-4 py-2">{item.model}</td>
-                    <td className="px-4 py-2">{item.description}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="4" className="text-center py-6">
-                    Brak wypożyczonych przedmiotów do zwrotu.
+            ) : (
+              borrowedItems.map((item) => (
+                <tr key={item.id} className="border-t border-gray-200">
+                  <td className="px-4 py-2 text-center">
+                    <input
+                      type="checkbox"
+                      checked={!!selectedItems[item.id]}
+                      onChange={() => handleCheckboxChange(item.id)}
+                    />
                   </td>
+                  <td className="px-4 py-2">{item.manufacturer}</td>
+                  <td className="px-4 py-2">{item.model}</td>
+                  <td className="px-4 py-2">{item.serial_number}</td>
+                  <td className="px-4 py-2">{item.description}</td>
                 </tr>
-              )}
-            </tbody>
-          </table>
-
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
           <div className="flex justify-end pt-6">
             <button
               type="submit"
@@ -101,7 +104,7 @@ const Return = ({ setIsReturnFormOpen, handleReturnInvoiceSuccess, borrowedItems
               className={`px-6 py-3 text-white font-semibold rounded-md shadow transition ${
                 loading
                   ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700'
+                  : 'bg-blue-500 hover:bg-blue-600'
               }`}
             >
               {loading ? 'Przetwarzanie...' : 'Zatwierdź Zwrot'}
@@ -109,7 +112,10 @@ const Return = ({ setIsReturnFormOpen, handleReturnInvoiceSuccess, borrowedItems
           </div>
         </form>
       </div>
-    </div>
+    </form>
+  </div>
+</div>
+
   );
 };
 

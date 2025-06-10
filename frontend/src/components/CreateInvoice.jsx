@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 
-const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
+const CreateInvoice = ({ setIsCreateFormOpen, onInvoiceCreated }) => {
   const [formData, setFormData] = useState({
     number: "",
     issued_at: "",
     recipient_name: "",
     recipient_address: "",
     recipient_nip: "",
-    products: [{ description: "", price: "" }],
+    products: [{ instance_id: "", price: "" }],
   });
 
   const [message, setMessage] = useState(null);
@@ -40,7 +40,7 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
   const handleAddProduct = () => {
     setFormData((prev) => ({
       ...prev,
-      products: [...prev.products, { description: "", price: "" }],
+      products: [...prev.products, { instance_id: "", price: "" }],
     }));
   };
 
@@ -62,10 +62,14 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
     try {
       await axios.post("http://localhost:3000/invoices/create", {
         ...formData,
-        products: formData.products.map((p) => ({
-          description: p.description,
-          price: parseFloat(p.price),
-        })),
+        products: formData.products.map((p) => {
+          const selectedItem = items.find((item) => item.instance_id === parseInt(p.instance_id));
+          return {
+            instance_id: parseInt(p.instance_id),
+            description: selectedItem ? `${selectedItem.manufacturer} ${selectedItem.model}` : "",
+            price: parseFloat(p.price),
+          };
+        }),
       });
 
       setMessage("Faktura została utworzona.");
@@ -75,12 +79,15 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
         recipient_name: "",
         recipient_address: "",
         recipient_nip: "",
-        products: [{ description: "", price: "" }],
+        products: [{ instance_id: "", price: "" }],
       });
-      //handleCreateInvoiceSuccess();
+
+      if (onInvoiceCreated) onInvoiceCreated(); // 🔄 Odśwież listę faktur w Invoices.jsx
+      setIsCreateFormOpen(false); // 🧼 Zamknij formularz
     } catch (err) {
       console.error(err);
-      //setMessage("Błąd podczas tworzenia faktury.");
+      const errorMsg = err.response?.data?.error || "Błąd podczas tworzenia faktury.";
+      setMessage(errorMsg);
     }
   };
 
@@ -89,8 +96,84 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
     0
   );
 
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target.result;
+      const lines = content.split("\n").map((line) => line.trim());
+
+      const newForm = {
+        number: "",
+        issued_at: "",
+        recipient_name: "",
+        recipient_address: "",
+        recipient_nip: "",
+        products: [],
+      };
+
+      let mode = null;
+
+      lines.forEach((line) => {
+        if (line.startsWith("Faktura nr:")) {
+          newForm.number = line.split("Faktura nr:")[1].trim();
+        } else if (line.startsWith("Data wystawienia:")) {
+          const date = line.split("Data wystawienia:")[1].trim();
+          newForm.issued_at = new Date(date).toISOString().slice(0, 10);
+        } else if (line.startsWith("Nabywca:")) {
+          mode = "nabywca";
+        } else if (line.startsWith("Produkty:")) {
+          mode = "produkty";
+        } else if (line.startsWith("Sprzedawca:") || line.startsWith("Do zapłaty:")) {
+          mode = null;
+        } else if (mode === "nabywca") {
+          if (!newForm.recipient_name) {
+            newForm.recipient_name = line;
+          } else if (!newForm.recipient_address) {
+            newForm.recipient_address = line;
+          } else if (!newForm.recipient_nip) {
+            newForm.recipient_nip = line;
+          }
+        } else if (mode === "produkty") {
+          const match = line.match(/^\d+\.\s+(.+)\s+-\s+(\d+(\.\d+)?)\s+zł$/);
+          if (match) {
+            const description = match[1];
+            const price = parseFloat(match[2]);
+
+            const matched = items.find(
+              (i) => `${i.manufacturer} ${i.model}` === description
+            );
+
+            newForm.products.push({
+              instance_id: matched ? matched.instance_id : "",
+              price: price.toFixed(2),
+            });
+          }
+        }
+      });
+
+      setFormData((prev) => ({
+        ...prev,
+        ...newForm,
+      }));
+
+      setMessage("Dane z pliku zostały wczytane.");
+    };
+
+    reader.readAsText(file);
+  };
+
   return (
     <div className="flex justify-center bg-gray-100 py-20 px-4">
+      <input
+        type="file"
+        accept=".txt"
+        onChange={handleFileUpload}
+        className="absolute top-6 left-6"
+      />
+
       <form
         onSubmit={handleSubmit}
         className="relative bg-white border border-gray-300 shadow-lg p-10 rounded-md w-full max-w-[960px]"
@@ -175,18 +258,15 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
                 <td className="py-2 px-4">{index + 1}</td>
                 <td className="py-2 px-4">
                   <select
-                    name="description"
-                    value={product.description}
+                    name="instance_id"
+                    value={product.instance_id}
                     onChange={(e) => handleChange(e, index)}
                     required
                     className="w-full p-2 border border-gray-300 rounded"
                   >
                     <option value="">Wybierz przedmiot</option>
                     {items.map((item) => (
-                      <option
-                        key={item.id}
-                        value={`${item.manufacturer} ${item.model}`}
-                      >
+                      <option key={item.instance_id} value={item.instance_id}>
                         {item.manufacturer} {item.model}
                       </option>
                     ))}
@@ -227,20 +307,13 @@ const CreateInvoice = ({ setIsCreateFormOpen, handleCreateInvoiceSuccess }) => {
 
         <div className="text-right mb-8">
           <p className="text-lg font-semibold">
-            Do zapłaty:{" "}
-            <span className="text-green-600">{totalPrice.toFixed(2)} zł</span>
+            Do zapłaty: <span className="text-green-600">{totalPrice.toFixed(2)} zł</span>
           </p>
         </div>
 
         {message && (
-          <p className="text-center text-red-500 font-semibold mb-6">
-            {message}
-          </p>
+          <p className="text-center text-red-500 font-semibold mb-6">{message}</p>
         )}
-
-        <div className="text-left mb-8">
-          <p className="text-lg font-semibold">Przelew środków wykonać na konto:</p>
-        </div>
 
         <button
           type="submit"

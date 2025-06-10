@@ -49,7 +49,7 @@ const Reports = ({ userToken }) => {
             setActiveModule("view");
             setActiveSecondStep("inventory");
           }}
-          className="mb-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400"
+          className={`mb-4 px-4 py-2 ${activeModule === "view" ? "bg-[rgb(0,66,37)]" : "bg-green-500"} text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400`}
         >
           Wyświetl raporty
         </button>
@@ -58,7 +58,7 @@ const Reports = ({ userToken }) => {
             setActiveModule("create");
             setActiveSecondStep("inventory");
           }}
-          className="mb-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400"
+          className={`mb-4 px-4 py-2 ${activeModule === "create" ? "bg-[rgb(0,66,37)]" : "bg-green-500"} text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400`}
         >
           Utwórz raport
         </button>
@@ -68,19 +68,19 @@ const Reports = ({ userToken }) => {
         <h3 className="text-2xl font-semibold mb-6">Typy:</h3>
         <button
           onClick={() => setActiveSecondStep("inventory")}
-          className="mb-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400"
+          className={`mb-4 px-4 py-2 ${activeSecondStep === "inventory" ? "bg-[rgb(0,66,37)]" : "bg-green-500"} text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400`}
         >
           Stan magazynu
         </button>
         <button
           onClick={() => setActiveSecondStep("invoices")}
-          className="mb-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400"
+          className={`mb-4 px-4 py-2 ${activeSecondStep === "invoices" ? "bg-[rgb(0,66,37)]" : "bg-green-500"} text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400`}
         >
           Faktury
         </button>
         <button
           onClick={() => setActiveSecondStep("inout")}
-          className="mb-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400"
+          className={`mb-4 px-4 py-2 ${activeSecondStep === "inout" ? "bg-[rgb(0,66,37)]" : "bg-green-500"} text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400`}
         >
           Operacje in/out
         </button>

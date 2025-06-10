@@ -1,30 +1,89 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const multer = require('multer');
+
+
+
+const upload = multer({ storage: multer.memoryStorage() });
+
+//save pdf in database
+router.post('/upload-pdf', upload.single('pdf'), (req, res) => {
+  const fileBuffer = req.file?.buffer;
+  const number = req.body.number;
+
+  if (!fileBuffer || !number) {
+    return res.status(400).json({ error: 'Numer faktury i plik PDF są wymagane.' });
+  }
+
+  const now = new Date();
+
+  const query = `
+    INSERT INTO invoices (number, issued_at, pdf)
+    VALUES (?, ?, ?)
+  `;
+
+  db.query(query, [number, now, fileBuffer], (err, result) => {
+    if (err) {
+      console.error("Błąd podczas zapisywania faktury z PDF:", err);
+      return res.status(500).json({ error: 'Błąd serwera.' });
+    }
+
+    res.status(201).json({
+      message: 'Faktura z PDF została utworzona.',
+      invoiceId: result.insertId,
+    });
+  });
+});
+
+router.get('/pdf/:id', (req, res) => {
+  const invoiceId = req.params.id;
+
+  const query = 'SELECT number, pdf FROM invoices WHERE id = ? LIMIT 1';
+
+  db.query(query, [invoiceId], (err, results) => {
+    if (err) {
+      console.error('Błąd przy pobieraniu PDF:', err);
+      return res.status(500).json({ error: 'Błąd serwera.' });
+    }
+
+    if (results.length === 0 || !results[0].pdf) {
+      return res.status(404).json({ error: 'Plik PDF nie został znaleziony.' });
+    }
+
+    const invoice = results[0];
+    const pdfBuffer = invoice.pdf;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${invoice.number}.pdf"`); // lub attachment
+    res.send(pdfBuffer);
+  });
+});
 
 
 // get all invoices
 router.get('/all', (req, res) => {
-    const query = `
-        SELECT 
-            invoices.id,
-            invoices.number, 
-            invoices.issued_at,
-            invoices.recipient_name
-        FROM invoices 
-        ORDER BY invoices.number;
-    `;
+  const query = `
+    SELECT 
+      invoices.id,
+      invoices.number, 
+      invoices.issued_at,
+      recipient_name,
+      CASE WHEN invoices.pdf IS NOT NULL THEN 1 ELSE 0 END AS has_pdf
+    FROM invoices 
+    ORDER BY invoices.number;
+  `;
 
-    db.query(query, (err, results) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json({ error: 'Błąd serwera' });
-        }
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Błąd serwera' });
+    }
 
-        // Nie trzeba grupować, jeśli każdy rekord to jedna faktura
-        res.status(200).json(results);
-    });
+    res.status(200).json(results);
+  });
 });
+
 
 
 // create invoice
@@ -62,31 +121,38 @@ router.post('/create', (req, res) => {
         [number, issued_at, recipient_name, recipient_address, recipient_nip],
         (err, invoiceResult) => {
             if (err) {
+                if (err.code === 'ER_DUP_ENTRY') {
+                  return res.status(400).json({ error: 'Faktura o tym numerze już istnieje.' });
+                }
                 console.error('Błąd przy tworzeniu faktury:', err);
                 return res.status(500).json({ error: 'Błąd przy tworzeniu faktury.' });
-            }
+              }
+
 
             const invoiceId = invoiceResult.insertId;
 
             const insertItemsQuery = `
-                INSERT INTO invoice_items (invoice_id, description, price)
-                VALUES ?
-            `;
+                  INSERT INTO invoice_items (invoice_id, instance_id, description, price)
+                  VALUES ${products.map(() => '(?, ?, ?, ?)').join(', ')}
+              `;
 
-            const itemValues = products.map(product => [
-                invoiceId,
-                product.description,
-                product.price,
-            ]);
+              const itemValues = products.flatMap(product => [
+                  invoiceId,
+                  product.instance_id,
+                  product.description,
+                  product.price,
+              ]);
+              console.log("Zapytanie:", insertItemsQuery);
+              console.log("Wartości:", itemValues);
+              db.query(insertItemsQuery, itemValues, (err) => {
+                  if (err) {
+                      console.error('Błąd przy dodawaniu pozycji faktury:', err);
+                      return res.status(500).json({ error: 'Błąd przy dodawaniu pozycji faktury.' });
+                  }
 
-            db.query(insertItemsQuery, [itemValues], (err) => {
-                if (err) {
-                    console.error('Błąd przy dodawaniu pozycji faktury:', err);
-                    return res.status(500).json({ error: 'Błąd przy dodawaniu pozycji faktury.' });
-                }
+                  res.status(201).json({ message: 'Faktura została utworzona pomyślnie.' });
+              });
 
-                res.status(201).json({ message: 'Faktura została utworzona pomyślnie.' });
-            });
         }
     );
 });
@@ -95,14 +161,28 @@ router.post('/create', (req, res) => {
 
 // GET /api/inventory-items
 router.get('/inventory-items', (req, res) => {
-    db.query("SELECT id, manufacturer, model, description FROM inventory_items", (err, items) => {
-      if (err) {
-        console.error("Błąd podczas pobierania przedmiotów:", err);
-        return res.status(500).json({ error: 'Błąd serwera przy pobieraniu przedmiotów.' });
-      }
-      res.json(items);
-    });
+  const query = `
+    SELECT 
+      item_instances.id AS instance_id,
+      item_instances.serial_number,
+      item_instances.status,
+      item_instances.location,
+      inventory_items.manufacturer,
+      inventory_items.model,
+      inventory_items.description
+    FROM item_instances
+    JOIN inventory_items ON item_instances.item_id = inventory_items.id
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Błąd podczas pobierania instancji przedmiotów:", err);
+      return res.status(500).json({ error: 'Błąd serwera przy pobieraniu instancji przedmiotów.' });
+    }
+    res.json(results);
   });
+});
+
 
 
 // get invoices details
@@ -120,7 +200,7 @@ router.get('/:number', (req, res) => {
         invoice_items.price
       FROM invoices 
       LEFT JOIN invoice_items ON invoices.id = invoice_items.invoice_id
-      WHERE invoices.number = ?
+      WHERE invoices.id = ?
     `;
   
     db.query(query, [number], (err, results) => {
@@ -148,6 +228,34 @@ router.get('/:number', (req, res) => {
       res.status(200).json(invoice);
     });
   });
+
+  const handleFileUpload = async (e) => {
+  const file = e.target.files[0];
+  if (!file || file.type !== "application/pdf") {
+    alert("Wybierz plik PDF.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("pdf", file); // "pdf" to nazwa pola, którą Twój backend powinien obsłużyć
+
+  try {
+    const response = await axios.post(
+      "http://localhost:3000/invoices/upload-pdf",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    alert("Plik PDF został przesłany pomyślnie.");
+    console.log("Odpowiedź:", response.data);
+  } catch (error) {
+    console.error("Błąd podczas wysyłania pliku PDF:", error);
+    alert("Nie udało się przesłać pliku.");
+  }
+};
   
   
 

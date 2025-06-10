@@ -35,6 +35,28 @@ const ExportInvoicesReport = ({ userToken, report, usernames, onClose }) => {
     fetchReportItems();
   }, [userToken, report.id]);
 
+  const handleExport = async () => {
+    try {
+      // Log the download
+      await axios.post(
+        'http://localhost:3000/reports/logReportDownload',
+        {
+          reportId: report.id,
+          reportType: 'invoices',
+          fileName: fileName.endsWith(".pdf") ? fileName : `${fileName}.pdf`
+        },
+        {
+          headers: { Authorization: `Bearer ${userToken}` }
+        }
+      );
+      
+      toPDF();
+    } catch (err) {
+      console.error('Error logging download:', err);
+      toPDF();
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 flex items-center justify-center"
@@ -104,13 +126,13 @@ const ExportInvoicesReport = ({ userToken, report, usernames, onClose }) => {
             cursor: loading || !fileName || reportItems.length === 0 ? "not-allowed" : "pointer",
             opacity: loading || !fileName || reportItems.length === 0 ? 0.6 : 1
           }}
-          onClick={() => toPDF()}
+          onClick={handleExport}
           disabled={loading || !fileName || reportItems.length === 0}
         >
           {loading ? "Ładowanie danych..." : "Eksportuj do PDF"}
         </button>
 
-        {/* To, co zostanie wyeksportowane */}
+        {}
         <div
           ref={targetRef}
           style={{
@@ -124,7 +146,7 @@ const ExportInvoicesReport = ({ userToken, report, usernames, onClose }) => {
             boxShadow: "0 2px 8px rgba(0,0,0,0.07)"
           }}
         >
-          {/* Nagłówek */}
+          {}
           <h2 style={{ fontSize: 18, fontWeight: "bold", marginBottom: 8 }}>
             Szczegóły raportu nr {report.id}
           </h2>

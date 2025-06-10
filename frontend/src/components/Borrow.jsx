@@ -19,12 +19,15 @@ const Borrow = ({ setIsBorrowFormOpen, availableItems }) => {
     .filter(([_, val]) => val !== undefined)
     .map(([itemId]) => parseInt(itemId));
 
-  console.log('Wysyłane id:', selectedIds);
+  //console.log('Wysyłane id:', selectedIds);
 
   try {
+    console.log('Wysyłane ID (typeof):', selectedIds.map(id => [id, typeof id]));
+
+
     const response = await axios.post(
       'http://localhost:3000/inout_operations/borrow',
-      { item_ids: selectedIds }  // Wysyłamy tylko tablicę id
+      { item_ids: selectedIds }  //  tylko tablica id
     );
 
     console.log('Wypożyczenia zapisane:', response.data);
@@ -41,25 +44,34 @@ const Borrow = ({ setIsBorrowFormOpen, availableItems }) => {
       <div className="bg-white border border-gray-300 shadow-lg p-10 rounded-md w-[960px] relative flex flex-col max-h-[90vh] overflow-auto">
         <button
           onClick={() => setIsBorrowFormOpen(false)}
-          className="absolute top-6 right-6 text-red-600 font-bold hover:text-red-800"
+          className="absolute top-6 right-6 text-red-600 font-bold hover:text-red-800 text-lg"
         >
           Zamknij
         </button>
+    <h2 className="text-3xl font-bold text-blue-700 mb-8">Wypożycz dostępne urządzenia</h2>
 
-        <h2 className="text-3xl font-bold text-blue-700 mb-8">Wypożycz dostępne urządzenia</h2>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <table className="w-full text-sm text-left border border-gray-300">
-            <thead className="bg-gray-100">
+    <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+      {/* Kontener tabeli z przewijaniem */}
+      <div className="overflow-auto flex-1 border border-gray-200 rounded-md">
+        <table className="min-w-full text-sm text-left">
+          <thead className="bg-gray-100 sticky top-0 z-10">
+            <tr>
+              <th className="px-4 py-2 text-center">Zaznacz</th>
+              <th className="px-4 py-2">Producent</th>
+              <th className="px-4 py-2">Model</th>
+              <th className="px-4 py-2">Numer Seryjny</th>
+              <th className="px-4 py-2">Opis</th>
+            </tr>
+          </thead>
+          <tbody>
+            {availableItems.length === 0 ? (
               <tr>
-                <th className="px-4 py-2">Zaznacz</th>
-                <th className="px-4 py-2">Producent</th>
-                <th className="px-4 py-2">Model</th>
-                <th className="px-4 py-2">Opis</th>
+                <td colSpan="5" className="text-center py-6 text-gray-500 italic">
+                  Brak dostępnych urządzeń do wyporzyczenia.
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {availableItems.map((item) => (
+            ) : (
+              availableItems.map((item) => (
                 <tr key={item.id} className="border-t border-gray-200">
                   <td className="px-4 py-2 text-center">
                     <input
@@ -70,23 +82,28 @@ const Borrow = ({ setIsBorrowFormOpen, availableItems }) => {
                   </td>
                   <td className="px-4 py-2">{item.manufacturer}</td>
                   <td className="px-4 py-2">{item.model}</td>
+                  <td className="px-4 py-2">{item.serial_number}</td>
                   <td className="px-4 py-2">{item.description}</td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <div className="flex justify-end pt-6">
-            <button
-              type="submit"
-              className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow hover:bg-blue-700 transition"
-            >
-              Zatwierdź wypożyczenie
-            </button>
-          </div>
-        </form>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
-    </div>
+
+      {/* Przycisk zatwierdzenia */}
+      <div className="flex justify-end pt-6">
+        <button
+          type="submit"
+          className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow hover:bg-blue-700 transition"
+        >
+          Zatwierdź wypożyczenie
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
   );
 };
 

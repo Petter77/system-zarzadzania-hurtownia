@@ -35,6 +35,27 @@ const ExportReport = ({ userToken, report, usernames, onClose }) => {
     fetchReportItems();
   }, [userToken, report.id]);
 
+  const handleExport = async () => {
+    try {
+      await axios.post(
+        'http://localhost:3000/reports/logReportDownload',
+        {
+          reportId: report.id,
+          reportType: 'inventory',
+          fileName: fileName.endsWith(".pdf") ? fileName : `${fileName}.pdf`
+        },
+        {
+          headers: { Authorization: `Bearer ${userToken}` }
+        }
+      );
+      
+      toPDF();
+    } catch (err) {
+      console.error('Error logging download:', err);
+      toPDF();
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 flex items-center justify-center"
@@ -104,13 +125,13 @@ const ExportReport = ({ userToken, report, usernames, onClose }) => {
             cursor: loading || !fileName || reportItems.length === 0 ? "not-allowed" : "pointer",
             opacity: loading || !fileName || reportItems.length === 0 ? 0.6 : 1
           }}
-          onClick={() => toPDF()}
+          onClick={handleExport}
           disabled={loading || !fileName || reportItems.length === 0}
         >
           {loading ? "Ładowanie danych..." : "Eksportuj do PDF"}
         </button>
 
-        {/* To, co zostanie wyeksportowane */}
+        {}
         <div
           ref={targetRef}
           style={{
