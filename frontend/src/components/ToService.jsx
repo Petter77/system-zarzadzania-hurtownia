@@ -49,7 +49,7 @@ const ToService = ({ setAction, availableItems, handleToServiceSuccess }) => {
           Zamknij
         </button>
 
-        <h2 className="text-3xl font-bold text-green-700 mb-8">Dodaj urządzenia do naprawy</h2>
+        <h2 className="text-3xl font-bold text-blue-700 mb-8">Dodaj urządzenia do naprawy</h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <table className="w-full text-sm text-left border border-gray-300">
@@ -82,7 +82,7 @@ const ToService = ({ setAction, availableItems, handleToServiceSuccess }) => {
           <div className="flex justify-end pt-6">
             <button
               type="submit"
-              className="px-6 py-3 bg-green-600 text-white font-semibold rounded-md shadow hover:bg-green-700 transition"
+              className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow hover:bg-blue-700 transition"
             >
               Zatwierdź dodanie do naprawy
             </button>

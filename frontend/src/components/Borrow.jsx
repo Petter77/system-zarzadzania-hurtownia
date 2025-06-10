@@ -46,7 +46,7 @@ const Borrow = ({ setIsBorrowFormOpen, availableItems }) => {
           Zamknij
         </button>
 
-        <h2 className="text-3xl font-bold text-blue-600 mb-8">Wypożycz dostępne urządzenia</h2>
+        <h2 className="text-3xl font-bold text-blue-700 mb-8">Wypożycz dostępne urządzenia</h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <table className="w-full text-sm text-left border border-gray-300">

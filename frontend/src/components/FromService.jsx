@@ -49,7 +49,7 @@ const FromService = ({ setAction, itemsInService, handleFromServiceSuccess }) =>
           Zamknij
         </button>
 
-        <h2 className="text-3xl font-bold text-red-500 mb-8">Przywróć urządzenia z naprawy</h2>
+        <h2 className="text-3xl font-bold text-blue-700 mb-8">Przywróć urządzenia z naprawy</h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <table className="w-full text-sm text-left border border-gray-300">
@@ -82,7 +82,7 @@ const FromService = ({ setAction, itemsInService, handleFromServiceSuccess }) =>
           <div className="flex justify-end pt-6">
             <button
               type="submit"
-              className="px-6 py-3 bg-red-500 text-white font-semibold rounded-md shadow hover:bg-red-600 transition"
+              className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-md shadow hover:bg-blue-600 transition"
             >
               Zatwierdź przywrócenie
             </button>
