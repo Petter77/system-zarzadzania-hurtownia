@@ -23,7 +23,7 @@ const downloadTxtInvoice = (invoice) => {
   lines.push("");
   lines.push("Sprzedawca:");
   lines.push("Sieciowi");
-  lines.push("Marsjańska √-1a");
+  lines.push("Marsjanska √-1a");
   lines.push("NIP: 0000000000");
   lines.push("");
   lines.push("Nabywca:");
@@ -34,12 +34,12 @@ const downloadTxtInvoice = (invoice) => {
   lines.push("Produkty:");
 
   invoice.products.forEach((p, index) => {
-    lines.push(`${index + 1}. ${p.description} - ${Number(p.price).toFixed(2)} zł`);
+    lines.push(`${index + 1}. ${p.description} - ${Number(p.price).toFixed(2)} zl`);
   });
 
   const total = invoice.products.reduce((sum, p) => sum + Number(p.price || 0), 0);
   lines.push("");
-  lines.push(`Do zapłaty: ${total.toFixed(2)} zł`);
+  lines.push(`Do zaplaty: ${total.toFixed(2)} zl`);
 
   const content = lines.join("\n");
   const blob = new Blob([content], { type: "text/plain" });

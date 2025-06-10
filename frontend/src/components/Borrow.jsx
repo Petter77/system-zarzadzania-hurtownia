@@ -3,6 +3,7 @@ import axios from 'axios';
 
 const Borrow = ({ setIsBorrowFormOpen, availableItems }) => {
   const [selectedItems, setSelectedItems] = useState({});
+  const [serviceAddress, setServiceAddress] = useState('');
 
   const handleCheckboxChange = (itemId) => {
     setSelectedItems((prev) => ({
@@ -27,7 +28,9 @@ const Borrow = ({ setIsBorrowFormOpen, availableItems }) => {
 
     const response = await axios.post(
       'http://localhost:3000/inout_operations/borrow',
-      { item_ids: selectedIds }  //  tylko tablica id
+      { item_ids: selectedIds,
+        service_address: serviceAddress
+      }  
     );
 
     console.log('Wypożyczenia zapisane:', response.data);
@@ -90,7 +93,20 @@ const Borrow = ({ setIsBorrowFormOpen, availableItems }) => {
           </tbody>
         </table>
       </div>
-
+            <div className="mt-6">
+        <label htmlFor="service-address" className="block text-sm font-medium text-gray-700 mb-2">
+          Adres serwisu
+        </label>
+        <input
+          type="text"
+          id="service-address"
+          value={serviceAddress}
+          onChange={(e) => setServiceAddress(e.target.value)}
+          placeholder="Wpisz adres serwisu, np. SerwisTech, ul. Przykładowa 123, Warszawa"
+          className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          required
+        />
+      </div>
       {/* Przycisk zatwierdzenia */}
       <div className="flex justify-end pt-6">
         <button
