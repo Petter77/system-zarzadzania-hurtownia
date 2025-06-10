@@ -102,8 +102,6 @@ const FromService = ({ setAction, itemsInService, handleFromServiceSuccess }) =>
           </div>
         </form>
 
-      </div>
-    </form>
   </div>
 </div>
 
