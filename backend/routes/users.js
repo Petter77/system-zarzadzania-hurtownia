@@ -5,7 +5,13 @@ const bcrypt = require('bcrypt');
 const checkIfUserName = require('../middlewares/auth/checkIfUserName');
 const authorizeRoles = require('../middlewares/auth/authorizeRoles');
 
-// Helper function to log user operations
+const sanitizeUserData = (userData) => {
+    if (!userData) return null;
+    const sanitized = { ...userData };
+    delete sanitized.password_hash;
+    return sanitized;
+};
+
 const logUserOperation = (req, operationType, targetUserId, previousData, newData) => {
     if (!req.user || !req.user.user || !req.user.user.userId) {
         console.error('Error: User information not available in request');
@@ -25,14 +31,13 @@ const logUserOperation = (req, operationType, targetUserId, previousData, newDat
         performedByUserId,
         operationType,
         targetUserId,
-        previousData ? JSON.stringify(previousData) : null,
-        newData ? JSON.stringify(newData) : null
+        previousData ? JSON.stringify(sanitizeUserData(previousData)) : null,
+        newData ? JSON.stringify(sanitizeUserData(newData)) : null
     ], (err) => {
         if (err) console.error('Error logging user operation:', err);
     });
 };
 
-// get all users
 router.get('/all', authorizeRoles('manager'), (req, res) =>{
     db.query('SELECT * FROM users', (err, results) =>{
         if (err) return res.status(500).json({ error: 'Błąd serwera' });
@@ -40,7 +45,6 @@ router.get('/all', authorizeRoles('manager'), (req, res) =>{
     })
 })
 
-// get user by user id in db
 router.get('/all/:id', authorizeRoles('manager'), (req, res) =>{
     const {id} = req.params
     db.query('SELECT * FROM users WHERE id=?', [id], (err, result) =>{
@@ -49,12 +53,10 @@ router.get('/all/:id', authorizeRoles('manager'), (req, res) =>{
     })
 })
 
-// get all data about actual logged in user
 router.get('/logged', (req, res) =>{
     res.status(200).json(req.user.user);
 })
 
-//create new user
 router.post('/create', authorizeRoles('manager'), checkIfUserName(true), async (req, res) => {
     const { username, password, role} = req.body
   
@@ -68,7 +70,6 @@ router.post('/create', authorizeRoles('manager'), checkIfUserName(true), async (
         (err, result) => {
           if (err) return res.status(500).json({ error: 'Błąd serwera' });
           
-          // Log the creation operation
           const newUserData = {
             id: result.insertId,
             username,
@@ -83,11 +84,9 @@ router.post('/create', authorizeRoles('manager'), checkIfUserName(true), async (
     }
 });
 
-// delete user by id
 router.delete('/delete/:id', authorizeRoles('manager'), (req, res) =>{
     const targetUserId = req.params.id;
     
-    // First get the user data before deletion
     db.query('SELECT * FROM users WHERE id=?', [targetUserId], (err, results) => {
         if (err) return res.status(500).json({ error: 'Błąd serwera' });
         
@@ -97,11 +96,9 @@ router.delete('/delete/:id', authorizeRoles('manager'), (req, res) =>{
 
         const userData = results[0];
         
-        // Then delete the user
         db.query('DELETE FROM users WHERE id=?', [targetUserId], (err) => {
             if (err) return res.status(500).json({ error: 'Błąd serwera' });
             
-            // Log the deletion operation
             logUserOperation(req, 'DELETE', targetUserId, userData, null);
             
             return res.status(200).json({message: 'Użytkownik został usunięty pomyślnie!' });
@@ -109,12 +106,10 @@ router.delete('/delete/:id', authorizeRoles('manager'), (req, res) =>{
     });
 });
 
-// update user by id
 router.put('/update/:id', authorizeRoles('manager'), async (req, res) => {
     const targetUserId = req.params.id;
     const { username, password, role } = req.body;
 
-    // First get the current user data
     db.query('SELECT * FROM users WHERE id=?', [targetUserId], async (err, results) => {
         if (err) return res.status(500).json({ error: 'Błąd serwera' });
         
@@ -152,12 +147,9 @@ router.put('/update/:id', authorizeRoles('manager'), async (req, res) => {
             if (result.affectedRows === 0) {
                 return res.status(404).json({ error: 'Dane nie zostały zaaktualizowane!.' });
             }
-
-            // Get the updated user data
             db.query('SELECT * FROM users WHERE id=?', [targetUserId], (err, results) => {
                 if (err) return res.status(500).json({ error: 'Błąd serwera' });
                 
-                // Log the update operation
                 logUserOperation(req, 'UPDATE', targetUserId, previousData, results[0]);
                 
                 return res.status(200).json({ message: 'Dane użytkownika zostały zaktualizowane pomyślnie!' });

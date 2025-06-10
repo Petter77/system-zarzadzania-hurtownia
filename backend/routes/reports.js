@@ -4,7 +4,28 @@ const db = require('../db');
 const bcrypt = require('bcrypt');
 const authorizeRoles = require('../middlewares/auth/authorizeRoles');
 
-// get all users
+const logReportOperation = (userId, operationType, reportId, reportData) => {
+  const sql = `
+    INSERT INTO audit_logs 
+    (user_id, operation_type, data_id, data_type, previous_data, new_data)
+    VALUES (?, ?, ?, 'REPORT', ?, ?)
+  `;
+
+  const values = [
+    userId,
+    operationType,
+    reportId,
+    null,
+    JSON.stringify(reportData)
+  ];
+
+  db.query(sql, values, (err) => {
+    if (err) {
+      console.error('Błąd podczas logowania operacji raportu:', err);
+    }
+  });
+};
+
 router.get('/getAllUsers', authorizeRoles('manager'), (req, res) => {
     db.query('SELECT id, username FROM users', (err, results) => {
         if (err) return res.status(500).json({ error: 'Błąd serwera' });
@@ -12,7 +33,6 @@ router.get('/getAllUsers', authorizeRoles('manager'), (req, res) => {
     });
 });
 
-// get inventory reports
 router.get('/getReportsInventory', authorizeRoles('manager'), (req, res) =>{
     db.query('SELECT * FROM `reports` WHERE type = 0', (err, results) =>{
         if (err) return res.status(500).json({ error: 'Błąd serwera' });
@@ -20,7 +40,6 @@ router.get('/getReportsInventory', authorizeRoles('manager'), (req, res) =>{
     })
 })
 
-// get invoices reports
 router.get('/getReportsInvoices', authorizeRoles('manager'), (req, res) =>{
     db.query('SELECT * FROM `reports` WHERE type = 1', (err, results) =>{
         if (err) return res.status(500).json({ error: 'Błąd serwera' });
@@ -28,7 +47,6 @@ router.get('/getReportsInvoices', authorizeRoles('manager'), (req, res) =>{
     })
 })
 
-// get in/out ops reports
 router.get('/getReportsInOut', authorizeRoles('manager'), (req, res) =>{
     db.query('SELECT * FROM `reports` WHERE type = 2', (err, results) =>{
         if (err) return res.status(500).json({ error: 'Błąd serwera' });
@@ -36,7 +54,6 @@ router.get('/getReportsInOut', authorizeRoles('manager'), (req, res) =>{
     })
 })
 
-// get user by user id in db
 router.get('/userDetails/:id', authorizeRoles('manager'), (req, res) =>{
   const {id} = req.params
   db.query('SELECT * FROM users WHERE id=?', [id], (err, result) =>{
@@ -45,7 +62,7 @@ router.get('/userDetails/:id', authorizeRoles('manager'), (req, res) =>{
   })
 })
 
-// get unique producer, model and localization for create report form
+
 router.get('/getDataForCreate', authorizeRoles('manager'), (req, res) => {
     const data = {};
   
@@ -67,21 +84,18 @@ router.get('/getDataForCreate', authorizeRoles('manager'), (req, res) => {
     });
   });
 
-// create report and assign items to it 
 router.post('/createReport', authorizeRoles('manager'), (req, res) => {
   const userId = req.user?.user?.userId;
   const { reportName, localizations, models, producers, statuses } = req.body;
 
   if (!reportName) return res.sendStatus(400);
 
-  // sprawdzenie czy taka nazwa już istnieje
   db.query("SELECT * FROM `reports` WHERE `title` = ?", [reportName], (err, result) => {
     if (err) return res.status(500).json({ error: 'Błąd serwera' });
     if (result.length > 0) {
       return res.status(409).json({ error: 'Raport o takiej nazwie już istnieje!' });
     }
 
-    // jeżeli nie, idź dalej
     db.query(
       "INSERT INTO `reports` (`title`, `created_by`, `created_at`, `type`) VALUES (?, ?, current_timestamp(), 0)",
       [reportName, userId],
@@ -90,7 +104,17 @@ router.post('/createReport', authorizeRoles('manager'), (req, res) => {
 
         const reportId = reportResult.insertId;
 
-        // Budowanie dynamicznego zapytania
+        logReportOperation(userId, 'CREATE', reportId, {
+          title: reportName,
+          type: 0,
+          filters: {
+            localizations,
+            models,
+            producers,
+            statuses
+          }
+        });
+
         let sql = `
           SELECT ii.id
           FROM item_instances ii
@@ -120,13 +144,11 @@ router.post('/createReport', authorizeRoles('manager'), (req, res) => {
           sql += ' WHERE ' + filters.join(' AND ');
         }
 
-        // Pobierz urządzenia spełniające filtry
         db.query(sql, params, (err, items) => {
           if (err) return res.status(500).json({ error: 'Błąd serwera', details: err });
 
-          if (!items.length) return res.sendStatus(201); // raport bez urządzeń
+          if (!items.length) return res.sendStatus(201);
 
-          // Przypisz urządzenia do raportu
           const values = items.map(item => [reportId, item.id, reportName]);
           db.query(
             "INSERT INTO report_items (report_id, instance_id, remarks) VALUES ?",
@@ -142,9 +164,12 @@ router.post('/createReport', authorizeRoles('manager'), (req, res) => {
   });
 });
 
-// get report items
 router.get('/getReportItems/:reportId', authorizeRoles('manager'), (req, res) => {
   const { reportId } = req.params;
+  const userId = req.user?.user?.userId;
+
+  logReportOperation(userId, 'VIEW', reportId, { reportId });
+
   const sql = `
     SELECT 
       ri.instance_id,
@@ -164,21 +189,18 @@ router.get('/getReportItems/:reportId', authorizeRoles('manager'), (req, res) =>
   });
 });
 
-// create invoices report and assign invoices to it 
 router.post('/createReportInvoices', authorizeRoles('manager'), (req, res) => {
   const userId = req.user?.user?.userId;
   const { reportName, startDate, finishDate, users} = req.body;
 
   if (!reportName) return res.sendStatus(400);
 
-  // sprawdzenie czy taka nazwa już istnieje
   db.query("SELECT * FROM `reports` WHERE `title` = ?", [reportName], (err, result) => {
     if (err) return res.status(500).json({ error: 'Błąd serwera' });
     if (result.length > 0) {
       return res.status(409).json({ error: 'Raport o takiej nazwie już istnieje!' });
     }
 
-    // jeżeli nie, idź dalej
     db.query(
       "INSERT INTO `reports` (`title`, `created_by`, `created_at`, `type`) VALUES (?, ?, current_timestamp(), 1)",
       [reportName, userId],
@@ -187,7 +209,16 @@ router.post('/createReportInvoices', authorizeRoles('manager'), (req, res) => {
 
         const reportId = reportResult.insertId;
 
-        // Budowanie dynamicznego zapytania
+        logReportOperation(userId, 'CREATE', reportId, {
+          title: reportName,
+          type: 1,
+          filters: {
+            startDate,
+            finishDate,
+            users
+          }
+        });
+
         let sql = `SELECT id FROM invoices`;
         const filters = [];
         const params = [];
@@ -211,9 +242,8 @@ router.post('/createReportInvoices', authorizeRoles('manager'), (req, res) => {
         db.query(sql, params, (err, invoices) => {
           if (err) return res.status(500).json({ error: 'Błąd serwera', details: err });
 
-          if (!invoices.length) return res.sendStatus(201); // raport bez faktur
+          if (!invoices.length) return res.sendStatus(201);
 
-          // przypisz faktury do raportu
           const values = invoices.map(inv => [reportId, inv.id]);
           db.query(
             "INSERT INTO report_invoices (report_id, invoice_id) VALUES ?",
@@ -229,9 +259,12 @@ router.post('/createReportInvoices', authorizeRoles('manager'), (req, res) => {
   });
 });
 
-// get report invoices
 router.get('/getReportInvoices/:reportId', authorizeRoles('manager'), (req, res) => {
   const { reportId } = req.params;
+  const userId = req.user?.user?.userId;
+
+  logReportOperation(userId, 'VIEW', reportId, { reportId });
+
   const sql = `
     SELECT
       ri.invoice_id AS id,
@@ -250,21 +283,18 @@ router.get('/getReportInvoices/:reportId', authorizeRoles('manager'), (req, res)
   });
 });
 
-// create in/out report and assign in/out operations to it 
 router.post('/createReportInOut', authorizeRoles('manager'), (req, res) => {
   const userId = req.user?.user?.userId;
   const { reportName, startDate, finishDate, performedBy, types} = req.body;
 
   if (!reportName) return res.sendStatus(400);
 
-  // sprawdzenie czy taka nazwa już istnieje
   db.query("SELECT * FROM `reports` WHERE `title` = ?", [reportName], (err, result) => {
     if (err) return res.status(500).json({ error: 'Błąd serwera' });
     if (result.length > 0) {
       return res.status(409).json({ error: 'Raport o takiej nazwie już istnieje!' });
     }
 
-    // jeżeli nie, idź dalej
     db.query(
       "INSERT INTO `reports` (`title`, `created_by`, `created_at`, `type`) VALUES (?, ?, current_timestamp(), 2)",
       [reportName, userId],
@@ -273,7 +303,17 @@ router.post('/createReportInOut', authorizeRoles('manager'), (req, res) => {
 
         const reportId = reportResult.insertId;
 
-        // budowanie dynamicznego zapytania
+        logReportOperation(userId, 'CREATE', reportId, {
+          title: reportName,
+          type: 2,
+          filters: {
+            startDate,
+            finishDate,
+            performedBy,
+            types
+          }
+        });
+
         let sql = `SELECT id FROM in_out_operations`;
         const filters = [];
         const params = [];
@@ -298,21 +338,17 @@ router.post('/createReportInOut', authorizeRoles('manager'), (req, res) => {
           sql += " WHERE " + filters.join(" AND ");
         }
 
-        //console.log(sql);
-
         db.query(sql, params, (err, inoutops) => {
           if (err) return res.status(500).json({ error: 'Błąd serwera', details: err });
 
-          if (!inoutops.length) return res.sendStatus(201); // raport bez faktur
+          if (!inoutops.length) return res.sendStatus(201);
 
-          // przypisz faktury do raportu
           const values = inoutops.map(inv => [reportId, inv.id]);
-          //console.log(values);
           db.query(
             "INSERT INTO report_inout (report_id, inout_id) VALUES ?",
             [values],
             (err) => {
-              if (err) return res.status(500).json({ error: 'Błąd przypisywania faktur', details: err });
+              if (err) return res.status(500).json({ error: 'Błąd przypisywania operacji', details: err });
               res.sendStatus(201);
             }
           );
@@ -322,9 +358,12 @@ router.post('/createReportInOut', authorizeRoles('manager'), (req, res) => {
   });
 });
 
-// get report in/out
 router.get('/getReportInOut/:reportId', authorizeRoles('manager'), (req, res) => {
   const { reportId } = req.params;
+  const userId = req.user?.user?.userId;
+
+  logReportOperation(userId, 'VIEW', reportId, { reportId });
+
   const sql = `
     SELECT
       ri.inout_id AS id,
@@ -344,6 +383,19 @@ router.get('/getReportInOut/:reportId', authorizeRoles('manager'), (req, res) =>
     if (err) return res.status(500).json({ error: 'Błąd serwera' });
     res.status(200).json({ results });
   });
+});
+
+router.post('/logReportDownload', authorizeRoles('manager'), (req, res) => {
+  const userId = req.user?.user?.userId;
+  const { reportId, reportType, fileName } = req.body;
+
+  logReportOperation(userId, 'DOWNLOAD', reportId, {
+    reportId,
+    reportType,
+    fileName
+  });
+
+  res.sendStatus(200);
 });
 
 module.exports = router;

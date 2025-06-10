@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { diffJson } from 'diff';
 
 function UsersTab() {
   const [data, setData] = useState([]);
@@ -107,19 +108,45 @@ function UsersTab() {
   };
 
   const auditLogColumns = [
-    'id',
     'timestamp',
     'user_id',
     'operation_type',
-    'data_id',
     'data_type',
-    'previous_data',
-    'new_data'
+    'data_id',
+    'changes'
   ];
+
+  const renderJsonDiff = (previousData, newData) => {
+    if (!previousData && !newData) return null;
+    
+    const prevJson = previousData ? JSON.parse(previousData) : {};
+    const newJson = newData ? JSON.parse(newData) : {};
+    
+    const differences = diffJson(prevJson, newJson);
+    
+    return (
+      <div className="text-xs break-words max-w-xs overflow-auto whitespace-pre font-mono">
+        {differences.map((part, index) => (
+          <span
+            key={index}
+            className={
+              part.added
+                ? 'bg-green-100 text-green-800'
+                : part.removed
+                ? 'bg-red-100 text-red-800'
+                : ''
+            }
+          >
+            {part.value}
+          </span>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="overflow-x-auto p-4">
-      <table className="min-w-full border border-gray-300 text-sm">
+      <table className="min-w-full border-collapse">
         <thead className="bg-gray-100">
           <tr>
             {auditLogColumns.map((col) => (
@@ -149,20 +176,20 @@ function UsersTab() {
         <tbody>
           {filteredData.map((log) => (
             <tr key={`log-${log.id}`} className="hover:bg-gray-50">
-              <td className="border px-3 py-2">{log.id}</td>
               <td className="border px-3 py-2">{new Date(log.timestamp).toLocaleString()}</td>
               <td className="border px-3 py-2">{log.user_id}</td>
               <td className="border px-3 py-2">{log.operation_type}</td>
-              <td className="border px-3 py-2">{log.data_id}</td>
               <td className="border px-3 py-2">{log.data_type}</td>
-              <td className="border px-3 py-2 text-xs break-words max-w-xs overflow-hidden whitespace-normal">{log.previous_data}</td>
-              <td className="border px-3 py-2 text-xs break-words max-w-xs overflow-hidden whitespace-normal">{log.new_data}</td>
+              <td className="border px-3 py-2">{log.data_id}</td>
+              <td className="border px-3 py-2">
+                {renderJsonDiff(log.previous_data, log.new_data)}
+              </td>
             </tr>
           ))}
           {filteredData.length === 0 && (
             <tr>
-              <td colSpan={auditLogColumns.length} className="text-center p-4 text-gray-400">
-                Brak wyników
+              <td colSpan={auditLogColumns.length} className="text-center py-4">
+                Brak danych do wyświetlenia
               </td>
             </tr>
           )}
