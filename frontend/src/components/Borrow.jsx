@@ -41,14 +41,13 @@ const Borrow = ({ setIsBorrowFormOpen, availableItems }) => {
 
   return (
     <div className="fixed inset-0 bg-gray-100 bg-opacity-80 flex justify-center items-center z-50 p-8">
-  <div className="bg-white border border-gray-300 shadow-lg p-10 rounded-md w-[960px] relative flex flex-col max-h-[90vh]">
-    <button
-      onClick={() => setIsBorrowFormOpen(false)}
-      className="absolute top-6 right-6 text-red-600 font-bold hover:text-red-800"
-    >
-      Zamknij
-    </button>
-
+      <div className="bg-white border border-gray-300 shadow-lg p-10 rounded-md w-[960px] relative flex flex-col max-h-[90vh] overflow-auto">
+        <button
+          onClick={() => setIsBorrowFormOpen(false)}
+          className="absolute top-6 right-6 text-red-600 font-bold hover:text-red-800 text-lg"
+        >
+          Zamknij
+        </button>
     <h2 className="text-3xl font-bold text-blue-700 mb-8">Wypożycz dostępne urządzenia</h2>
 
     <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">

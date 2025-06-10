@@ -4,6 +4,8 @@ import Borrow from "../components/Borrow";
 import Return from "../components/Return";
 import ToService from "../components/ToService";
 import FromService from "../components/FromService";
+import TileButton from "../components/TileButton";
+import { FaTools, FaUndo, FaArrowRight, FaArrowLeft } from "react-icons/fa";
 
 const Transactions = () => {
   const [action, setAction] = useState('');
@@ -15,8 +17,6 @@ const Transactions = () => {
 
   const handleClick = (type) => {
     setAction(type);
-    console.log(`Action selected: ${type}`);
-
     if (type === 'Return') {
       setIsReturnFormOpen(true);
     }
@@ -92,6 +92,7 @@ const Transactions = () => {
 
       {/* --- Modale --- */}
 
+
       {isBorrowFormOpen && (
         <Borrow
           setIsBorrowFormOpen={setIsBorrowFormOpen}
@@ -124,6 +125,8 @@ const Transactions = () => {
           }}
         />
       )}
+
+      {/* Return from Service */}
 
       {action === 'OUT' && (
         <FromService

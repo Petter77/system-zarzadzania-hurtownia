@@ -44,13 +44,13 @@ const Return = ({ setIsReturnFormOpen, handleReturnInvoiceSuccess, borrowedItems
 
   return (
     <div className="fixed inset-0 bg-gray-100 bg-opacity-80 flex justify-center items-center z-50 p-8">
-  <div className="bg-white border border-gray-300 shadow-lg p-10 rounded-md w-[960px] relative flex flex-col max-h-[90vh]">
-    <button
-      onClick={() => setIsReturnFormOpen(false)}
-      className="absolute top-6 right-6 text-red-600 font-bold hover:text-red-800"
-    >
-      Zamknij
-    </button>
+      <div className="bg-white border border-gray-300 shadow-lg p-10 rounded-md w-[960px] relative flex flex-col max-h-[90vh] overflow-auto">
+        <button
+          onClick={() => setIsReturnFormOpen(false)}
+          className="absolute top-6 right-6 text-red-600 font-bold hover:text-red-800 text-lg"
+        >
+          Zamknij
+        </button>
 
     <h2 className="text-3xl font-bold text-blue-700 mb-6">Zwróć wypożyczone urządzenia</h2>
 
@@ -97,19 +97,20 @@ const Return = ({ setIsReturnFormOpen, handleReturnInvoiceSuccess, borrowedItems
           </tbody>
         </table>
       </div>
-
-      <div className="flex justify-end pt-6">
-        <button
-          type="submit"
-          disabled={loading}
-          className={`px-6 py-3 text-white font-semibold rounded-md shadow transition ${
-            loading
-              ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-blue-600 hover:bg-blue-700'
-          }`}
-        >
-          {loading ? 'Przetwarzanie...' : 'Zatwierdź Zwrot'}
-        </button>
+          <div className="flex justify-end pt-6">
+            <button
+              type="submit"
+              disabled={loading}
+              className={`px-6 py-3 text-white font-semibold rounded-md shadow transition ${
+                loading
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-blue-500 hover:bg-blue-600'
+              }`}
+            >
+              {loading ? 'Przetwarzanie...' : 'Zatwierdź Zwrot'}
+            </button>
+          </div>
+        </form>
       </div>
     </form>
   </div>

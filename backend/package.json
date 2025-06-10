@@ -16,6 +16,7 @@
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.1",
+    "jwt-decode": "^4.0.0",
     "mysql2": "^3.14.0"
   },
   "devDependencies": {

@@ -41,15 +41,15 @@ const FromService = ({ setAction, itemsInService, handleFromServiceSuccess }) =>
 
   return (
     <div className="fixed inset-0 bg-gray-100 bg-opacity-80 flex justify-center items-center z-50 p-8">
-  <div className="bg-white border border-gray-300 shadow-lg p-10 rounded-md w-[960px] relative flex flex-col max-h-[90vh]">
-    <button
-      onClick={() => setAction('')}
-      className="absolute top-6 right-6 text-red-600 font-bold hover:text-red-800 text-lg"
-    >
-      Zamknij
-    </button>
+      <div className="bg-white border border-gray-300 shadow-lg p-10 rounded-md w-[960px] relative flex flex-col max-h-[90vh] overflow-auto">
+        <button
+          onClick={() => setAction('')}
+          className="absolute top-6 right-6 text-red-600 font-bold hover:text-red-800 text-lg"
+        >
+          Zamknij
+        </button>
 
-    <h2 className="text-3xl font-bold text-green-700 mb-8">Przywróć urządzenia z naprawy</h2>
+        <h2 className="text-3xl font-bold text-blue-700 mb-8">Przywróć urządzenia z naprawy</h2>
 
     <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
       {/* TABELA W KONTENERZE PRZEWIJALNYM */}
@@ -92,15 +92,16 @@ const FromService = ({ setAction, itemsInService, handleFromServiceSuccess }) =>
 
         </table>
       </div>
+          <div className="flex justify-end pt-6">
+            <button
+              type="submit"
+              className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-md shadow hover:bg-blue-600 transition"
+            >
+              Zatwierdź przywrócenie
+            </button>
+          </div>
+        </form>
 
-      {/* PRZYCISK ZATWIERDŹ */}
-      <div className="flex justify-end pt-6">
-        <button
-          type="submit"
-          className="px-6 py-3 bg-green-600 text-white font-semibold rounded-md shadow hover:bg-green-700 transition"
-        >
-          Zatwierdź przywrócenie
-        </button>
       </div>
     </form>
   </div>

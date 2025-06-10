@@ -44,13 +44,14 @@ const [serviceAddress, setServiceAddress] = useState('');
 
   return (
     <div className="fixed inset-0 bg-gray-100 bg-opacity-80 flex justify-center items-center z-50 p-8">
-  <div className="bg-white border border-gray-300 shadow-lg p-10 rounded-md w-[960px] relative flex flex-col max-h-[90vh]">
-    <button
-      onClick={() => setAction('')}
-      className="absolute top-6 right-6 text-red-600 font-bold hover:text-red-800 text-lg"
-    >
-      Zamknij
-    </button>
+
+      <div className="bg-white border border-gray-300 shadow-lg p-10 rounded-md w-[960px] relative flex flex-col max-h-[90vh] overflow-auto">
+        <button
+          onClick={() => setAction('')}
+          className="absolute top-6 right-6 text-red-600 font-bold hover:text-red-800 text-lg"
+        >
+          Zamknij
+        </button>
 
     <h2 className="text-3xl font-bold text-blue-700 mb-8">Dodaj urządzenia do naprawy</h2>
 
