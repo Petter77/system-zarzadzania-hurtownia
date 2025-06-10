@@ -25,7 +25,7 @@ const FromService = ({ setAction, itemsInService, handleFromServiceSuccess }) =>
 
     try {
       const response = await axios.post(
-        'http://localhost:3000/inout_operations/fromService',
+        'http://localhost:3000/inout_operations/return',
         { item_ids: selectedIds }
       );
 
@@ -51,18 +51,28 @@ const FromService = ({ setAction, itemsInService, handleFromServiceSuccess }) =>
 
         <h2 className="text-3xl font-bold text-blue-700 mb-8">Przywróć urządzenia z naprawy</h2>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <table className="w-full text-sm text-left border border-gray-300">
-            <thead className="bg-gray-100">
+    <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+      {/* TABELA W KONTENERZE PRZEWIJALNYM */}
+      <div className="overflow-auto flex-1 border border-gray-200 rounded-md">
+        <table className="min-w-full text-sm text-left">
+          <thead className="bg-gray-100 sticky top-0 z-10">
+            <tr>
+              <th className="px-4 py-2 text-center">Zaznacz</th>
+              <th className="px-4 py-2">Producent</th>
+              <th className="px-4 py-2">Model</th>
+              <th className="px-4 py-2">Numer Seryjny</th>
+              <th className="px-4 py-2">Opis</th>
+            </tr>
+          </thead>
+          <tbody>
+            {itemsInService.length === 0 ? (
               <tr>
-                <th className="px-4 py-2 text-center">Zaznacz</th>
-                <th className="px-4 py-2">Producent</th>
-                <th className="px-4 py-2">Model</th>
-                <th className="px-4 py-2">Opis</th>
+                <td colSpan="5" className="text-center py-6 text-gray-500 italic">
+                  Brak urządzeń w naprawie.
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {itemsInService.map((item) => (
+            ) : (
+              itemsInService.map((item) => (
                 <tr key={item.id} className="border-t border-gray-200">
                   <td className="px-4 py-2 text-center">
                     <input
@@ -73,12 +83,15 @@ const FromService = ({ setAction, itemsInService, handleFromServiceSuccess }) =>
                   </td>
                   <td className="px-4 py-2">{item.manufacturer}</td>
                   <td className="px-4 py-2">{item.model}</td>
+                  <td className="px-4 py-2">{item.serial_number}</td>
                   <td className="px-4 py-2">{item.description}</td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              ))
+            )}
+          </tbody>
 
+        </table>
+      </div>
           <div className="flex justify-end pt-6">
             <button
               type="submit"
@@ -88,8 +101,13 @@ const FromService = ({ setAction, itemsInService, handleFromServiceSuccess }) =>
             </button>
           </div>
         </form>
+
       </div>
-    </div>
+    </form>
+  </div>
+</div>
+
+
   );
 };
 

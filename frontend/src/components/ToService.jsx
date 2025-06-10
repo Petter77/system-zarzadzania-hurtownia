@@ -3,6 +3,7 @@ import axios from 'axios';
 
 const ToService = ({ setAction, availableItems, handleToServiceSuccess }) => {
   const [selectedItems, setSelectedItems] = useState({});
+const [serviceAddress, setServiceAddress] = useState('');
 
   const handleCheckboxChange = (itemId) => {
     setSelectedItems((prev) => ({
@@ -26,7 +27,9 @@ const ToService = ({ setAction, availableItems, handleToServiceSuccess }) => {
     try {
       const response = await axios.post(
         'http://localhost:3000/inout_operations/toService',
-        { item_ids: selectedIds }
+        { item_ids: selectedIds,
+          service_address: serviceAddress
+         }
       );
 
       console.log('Naprawa zapisana:', response.data);
@@ -41,6 +44,7 @@ const ToService = ({ setAction, availableItems, handleToServiceSuccess }) => {
 
   return (
     <div className="fixed inset-0 bg-gray-100 bg-opacity-80 flex justify-center items-center z-50 p-8">
+
       <div className="bg-white border border-gray-300 shadow-lg p-10 rounded-md w-[960px] relative flex flex-col max-h-[90vh] overflow-auto">
         <button
           onClick={() => setAction('')}
@@ -49,20 +53,30 @@ const ToService = ({ setAction, availableItems, handleToServiceSuccess }) => {
           Zamknij
         </button>
 
-        <h2 className="text-3xl font-bold text-blue-700 mb-8">Dodaj urządzenia do naprawy</h2>
+    <h2 className="text-3xl font-bold text-blue-700 mb-8">Dodaj urządzenia do naprawy</h2>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <table className="w-full text-sm text-left border border-gray-300">
-            <thead className="bg-gray-100">
+    <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+      {/* Tabela w kontenerze przewijalnym */}
+      <div className="overflow-auto flex-1 border border-gray-200 rounded-md">
+        <table className="min-w-full text-sm text-left">
+          <thead className="bg-gray-100 sticky top-0 z-10">
+            <tr>
+              <th className="px-4 py-2 text-center">Zaznacz</th>
+              <th className="px-4 py-2">Producent</th>
+              <th className="px-4 py-2">Model</th>
+              <th className="px-4 py-2">Numer Seryjny</th>
+              <th className="px-4 py-2">Opis</th>
+            </tr>
+          </thead>
+          <tbody>
+            {availableItems.length === 0 ? (
               <tr>
-                <th className="px-4 py-2 text-center">Zaznacz</th>
-                <th className="px-4 py-2">Producent</th>
-                <th className="px-4 py-2">Model</th>
-                <th className="px-4 py-2">Opis</th>
+                <td colSpan="5" className="text-center py-6 text-gray-500 italic">
+                  Brak dostępnych urządzeń do dodania do naprawy.
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {availableItems.map((item) => (
+            ) : (
+              availableItems.map((item) => (
                 <tr key={item.id} className="border-t border-gray-200">
                   <td className="px-4 py-2 text-center">
                     <input
@@ -73,23 +87,44 @@ const ToService = ({ setAction, availableItems, handleToServiceSuccess }) => {
                   </td>
                   <td className="px-4 py-2">{item.manufacturer}</td>
                   <td className="px-4 py-2">{item.model}</td>
+                  <td className="px-4 py-2">{item.serial_number}</td>
                   <td className="px-4 py-2">{item.description}</td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              ))
+            )}
+          </tbody>
 
-          <div className="flex justify-end pt-6">
-            <button
-              type="submit"
-              className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow hover:bg-blue-700 transition"
-            >
-              Zatwierdź dodanie do naprawy
-            </button>
-          </div>
-        </form>
+        </table>
       </div>
-    </div>
+      <div className="mt-6">
+  <label htmlFor="service-address" className="block text-sm font-medium text-gray-700 mb-2">
+    Adres serwisu
+  </label>
+  <input
+    type="text"
+    id="service-address"
+    value={serviceAddress}
+    onChange={(e) => setServiceAddress(e.target.value)}
+    placeholder="Wpisz adres serwisu, np. SerwisTech, ul. Przykładowa 123, Warszawa"
+    className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+    required
+  />
+</div>
+
+      {/* Przycisk zatwierdzania */}
+      <div className="flex justify-end pt-6">
+        <button
+          type="submit"
+          className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow hover:bg-blue-700 transition"
+          
+        >
+          Zatwierdź dodanie do naprawy
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
   );
 };
 

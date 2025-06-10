@@ -22,93 +22,120 @@ const Transactions = () => {
     }
   };
 
-  useEffect(() => {
-    axios.get('http://localhost:3000/inout_operations/available')
-      .then((response) => setAvailableItems(response.data))
-      .catch((error) => console.error('Błąd przy pobieraniu dostępnych przedmiotów:', error));
-  }, []);
+  // --- Funkcje pobierające dane ---
+  const fetchAvailableItems = () => {
+    return axios.get('http://localhost:3000/inout_operations/available')
+      .then((res) => setAvailableItems(res.data))
+      .catch((err) => console.error('Błąd przy pobieraniu dostępnych:', err));
+  };
+
+  const fetchBorrowedItems = () => {
+    return axios.get('http://localhost:3000/inout_operations/borrowed')
+      .then((res) => setBorrowedItems(res.data))
+      .catch((err) => console.error('Błąd przy pobieraniu wypożyczonych:', err));
+  };
+
+  const fetchDamagedItems = () => {
+    return axios.get('http://localhost:3000/inout_operations/damaged')
+      .then((res) => setDamagedItems(res.data))
+      .catch((err) => console.error('Błąd przy pobieraniu uszkodzonych:', err));
+  };
+
+  // --- Odśwież wszystkie dane jednocześnie ---
+  const refreshData = async () => {
+    await Promise.all([
+      fetchAvailableItems(),
+      fetchBorrowedItems(),
+      fetchDamagedItems(),
+    ]);
+  };
 
   useEffect(() => {
-    axios.get('http://localhost:3000/inout_operations/borrowed')
-      .then((response) => setBorrowedItems(response.data))
-      .catch((error) => console.error('Błąd przy pobieraniu wypożyczonych przedmiotów:', error));
-  }, []);
-
-  useEffect(() => {
-    axios.get('http://localhost:3000/inout_operations/damaged')
-      .then((response) => setDamagedItems(response.data))
-      .catch((error) => console.error('Błąd przy pobieraniu przedmiotów w naprawie:', error));
+    refreshData();
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-64px)] bg-gray-100">
-      <h1 className="text-5xl font-extrabold text-center mb-8 tracking-tight">Transakcje</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-8 w-auto">
-        <TileButton
-          icon={<FaTools />}
-          title="Do srewisu"
-          subtitle="Uszkodzone urządzenie"
-          iconColor="text-green-600"
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
+      <h1 className="text-4xl font-bold mb-8">Status urządzeń</h1>
+
+      <div className="w-full max-w-xl grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <button
           onClick={() => handleClick('IN')}
-        />
-        <TileButton
-          icon={<FaUndo />}
-          title="Powrót z serwisu"
-          subtitle="Naprawione urządzenie"
-          iconColor="text-red-500"
+          className="flex flex-col items-center justify-center p-5 bg-gradient-to-r from-green-400 to-green-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition transform hover:scale-105"
+        >
+          <span className="text-xl font-semibold">Dodaj do serwisu</span>
+          <span className="text-sm opacity-80">Naprawa</span>
+        </button>
+
+        <button
           onClick={() => handleClick('OUT')}
-        />
-        <TileButton
-          icon={<FaArrowRight />}
-          title="Wypożycz"
-          subtitle="Wybir urządzenie"
-          iconColor="text-blue-500"
+          className="flex flex-col items-center justify-center p-5 bg-gradient-to-r from-red-400 to-red-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition transform hover:scale-105"
+        >
+          <span className="text-xl font-semibold">Zwrot z serwisu</span>
+          <span className="text-sm opacity-80">Naprawione</span>
+        </button>
+
+        <button
           onClick={() => setIsBorrowFormOpen(true)}
-        />
-        <TileButton
-          icon={<FaArrowLeft />}
-          title="Zwróc"
-          subtitle="Oddaj urządzenie"
-          iconColor="text-yellow-500"
+          className="flex flex-col items-center justify-center p-5 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition transform hover:scale-105"
+        >
+          <span className="text-xl font-semibold">Wypożycz urządzenie</span>
+        </button>
+
+        <button
           onClick={() => handleClick('Return')}
-        />
+          className="flex flex-col items-center justify-center p-5 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition transform hover:scale-105"
+        >
+          <span className="text-xl font-semibold">Zwrot z wypożyczenia</span>
+        </button>
       </div>
 
-      {action && <p className="mt-6 text-lg">Wybrano: <strong>{action}</strong></p>}
+      {/* --- Modale --- */}
 
-      {/* Borrow Modal */}
+
       {isBorrowFormOpen && (
         <Borrow
           setIsBorrowFormOpen={setIsBorrowFormOpen}
-          handleBorrowInvoiceSuccess={(data) => console.log("Success:", data)}
           availableItems={availableItems}
+          handleBorrowInvoiceSuccess={(data) => {
+            console.log("Borrow success:", data);
+            refreshData();
+          }}
         />
       )}
 
-      {/* Return Modal */}
       {isReturnFormOpen && (
         <Return
           setIsReturnFormOpen={setIsReturnFormOpen}
-          handleReturnInvoiceSuccess={(data) => console.log("Success:", data)}
           borrowedItems={borrowedItems}
+          handleReturnInvoiceSuccess={(data) => {
+            console.log("Return success:", data);
+            refreshData();
+          }}
         />
       )}
 
-      {/* To Service */}
       {action === 'IN' && (
         <ToService
           setAction={setAction}
           availableItems={availableItems}
-          handleToServiceSuccess={(data) => console.log("ToService success:", data)}
+          handleToServiceSuccess={(data) => {
+            console.log("ToService success:", data);
+            refreshData();
+          }}
         />
       )}
 
       {/* Return from Service */}
+
       {action === 'OUT' && (
         <FromService
           setAction={setAction}
           itemsInService={damagedItems}
-          handleFromServiceSuccess={(data) => console.log("FromService success:", data)}
+          handleFromServiceSuccess={(data) => {
+            console.log("FromService success:", data);
+            refreshData();
+          }}
         />
       )}
     </div>
