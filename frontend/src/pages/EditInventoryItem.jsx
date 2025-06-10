@@ -53,6 +53,7 @@ const EditInventoryItem = () => {
     status: "",
     location: "",
     serial: "",
+    invoice: "",
   });
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("manufacturer");
@@ -65,6 +66,8 @@ const EditInventoryItem = () => {
 
   const [deleteItem, setDeleteItem] = useState(null);
   const [deleteMessage, setDeleteMessage] = useState(null);
+
+  const [invoices, setInvoices] = useState([]);
 
   useEffect(() => {
     if (editItem || deleteItem) {
@@ -84,6 +87,12 @@ const EditInventoryItem = () => {
     axios.get("http://localhost:3000/inventory/stock")
       .then(res => setStock(res.data))
       .catch(() => setStock([]));
+  }, []);
+
+  useEffect(() => {
+    axios.get("http://localhost:3000/inventory/invoices")
+      .then(res => setInvoices(res.data))
+      .catch(() => setInvoices([]));
   }, []);
 
   useEffect(() => {
@@ -132,19 +141,42 @@ const EditInventoryItem = () => {
   const filteredStock = stock
     .filter(item =>
       (!filters.manufacturer || item.manufacturer?.toLowerCase().startsWith(filters.manufacturer.toLowerCase())) &&
-      (!filters.device_type || item.device_type?.toLowerCase() === filters.device_type.toLowerCase()) &&
+      (!filters.device_type || item.device_type?.toLowerCase().includes(filters.device_type.toLowerCase())) &&
       (!filters.model || item.model?.toLowerCase().startsWith(filters.model.toLowerCase()))
     )
-    .map(item => ({
-      ...item,
-      quantity: item.instances.length,
-      instances: item.instances.filter(inst =>
-        (!filters.status || (inst.status && statusLabels[inst.status] === filters.status)) &&
-        (!filters.location || (inst.location && inst.location.toLowerCase().startsWith(filters.location.toLowerCase()))) &&
-        (!filters.serial || (inst.serial_number && inst.serial_number.toLowerCase().startsWith(filters.serial.toLowerCase())))
-      )
-    }))
-    .filter(item => item.instances.length > 0)
+    .map(item => {
+      let filteredInstances = item.instances;
+      if (item.instances.length > 0) {
+        filteredInstances = item.instances.filter(inst => {
+          if (inst.status === "archived" || inst.status === "Zarchiwizowany") return false;
+          const invoiceFilter = filters.invoice?.trim().toLowerCase();
+          let invoiceMatch = true;
+          if (invoiceFilter) {
+            if ("brak faktury".startsWith(invoiceFilter)) {
+              invoiceMatch = !inst.invoice || inst.invoice.trim() === "";
+            } else {
+              invoiceMatch = inst.invoice && inst.invoice.toLowerCase().startsWith(invoiceFilter);
+            }
+          }
+          return (
+            (!filters.status || (inst.status && statusLabels[inst.status] === filters.status)) &&
+            (!filters.location || (inst.location && inst.location.toLowerCase().startsWith(filters.location.toLowerCase()))) &&
+            (!filters.serial || (inst.serial_number && inst.serial_number.toLowerCase().startsWith(filters.serial.toLowerCase()))) &&
+            invoiceMatch
+          );
+        });
+      }
+      const anyInstanceFilter = filters.status || filters.location || filters.serial || filters.invoice;
+      if (anyInstanceFilter && filteredInstances.length === 0) {
+        return null;
+      }
+      return {
+        ...item,
+        quantity: item.instances.length,
+        instances: filteredInstances
+      };
+    })
+    .filter(item => item !== null)
     .sort((a, b) => {
       let aVal = a[sortBy];
       let bVal = b[sortBy];
@@ -178,6 +210,7 @@ const EditInventoryItem = () => {
       serial_number: inst.serial_number,
       status: inst.status,
       location: inst.location,
+      invoice: inst.invoice || "",
     });
     setEditMessage(null);
   };
@@ -196,6 +229,13 @@ const EditInventoryItem = () => {
     e.preventDefault();
     setEditMessage(null);
 
+    if (editItem.type === "instance") {
+      if (editForm.invoice && !invoices.includes(editForm.invoice)) {
+        setEditMessage("Faktura nie istnieje w bazie.");
+        return;
+      }
+    }
+
     try {
       if (editItem.type === "item") {
         await axios.post("http://localhost:3000/inventory/edit-item", {
@@ -211,7 +251,13 @@ const EditInventoryItem = () => {
             description: editForm.description,
           }
         });
-        alert("Edycja sprzętu zakończona sukcesem!");
+        const count = editItem?.item?.instances?.length || 1;
+        alert(`Edycja sprzętu dla ${count} urządzeń zakończona sukcesem!`);
+        setEditItem(null);
+        setEditForm({});
+        axios.get("http://localhost:3000/inventory/stock")
+          .then(res => setStock(res.data))
+          .catch(() => setStock([]));
       } else if (editItem.type === "instance") {
         await axios.post("http://localhost:3000/inventory/edit-instance", {
           old_serial_number: editItem.inst.serial_number,
@@ -219,19 +265,46 @@ const EditInventoryItem = () => {
             serial_number: editForm.serial_number,
             status: editForm.status,
             location: editForm.location,
+            invoice: editForm.invoice || null,
           }
         });
+        setEditMessage("Zapisano zmiany.");
         alert("Edycja egzemplarza zakończona sukcesem!");
+        setEditItem(null);
+        setEditForm({});
+        axios.get("http://localhost:3000/inventory/stock")
+          .then(res => setStock(res.data))
+          .catch(() => setStock([]));
       }
-      setEditMessage("Zapisano zmiany.");
-      setEditItem(null);
-      setEditForm({});
-      axios.get("http://localhost:3000/inventory/stock")
-        .then(res => setStock(res.data))
-        .catch(() => setStock([]));
     } catch (err) {
-      setEditMessage("Błąd podczas zapisu.");
-      alert("Błąd podczas edycji.");
+      if (
+        err.response &&
+        err.response.data &&
+        err.response.data.error &&
+        err.response.data.duplicateSerials
+      ) {
+        setEditMessage(
+          "Nie można zedytować sprzętu, ponieważ występują powielone numery seryjne wśród egzemplarzy."
+        );
+      } else if (
+        err.response &&
+        err.response.data &&
+        err.response.data.error &&
+        err.response.data.error.includes("Numer seryjny już istnieje dla tego producenta")
+      ) {
+        setEditMessage("Numer seryjny już istnieje dla tego producenta.");
+      } else if (
+        err.response &&
+        err.response.data &&
+        err.response.data.error &&
+        err.response.data.error.includes("Faktura nie istnieje w bazie")
+      ) {
+        setEditMessage("Faktura nie istnieje w bazie.");
+      } else if (err.response && err.response.data && err.response.data.error) {
+        setEditMessage(err.response.data.error);
+      } else {
+        setEditMessage("Błąd podczas zapisu.");
+      }
     }
   };
 
@@ -255,17 +328,17 @@ const EditInventoryItem = () => {
     setDeleteMessage(null);
     try {
       if (deleteItem.type === "instance") {
-        await axios.post("http://localhost:3000/inventory/delete-instance", {
+        await axios.post("http://localhost:3000/inventory/archive-instance", {
           serial_number: deleteItem.inst.serial_number
         });
-        alert("Egzemplarz został usunięty.");
+        alert("Egzemplarz został zarchiwizowany.");
       } else if (deleteItem.type === "device") {
-        await axios.post("http://localhost:3000/inventory/delete-device", {
+        await axios.post("http://localhost:3000/inventory/archive-device", {
           manufacturer: deleteItem.item.manufacturer,
           device_type: deleteItem.item.device_type,
           model: deleteItem.item.model
         });
-        alert("Sprzęt wraz z egzemplarzami został usunięty.");
+        alert("Wszystkie egzemplarze tego sprzętu zostały zarchiwizowane.");
       }
       setDeleteMessage("Usunięto.");
       setDeleteItem(null);
@@ -321,17 +394,15 @@ const EditInventoryItem = () => {
           </div>
           <div className="mb-3">
             <label className="block text-sm font-medium mb-1">Typ urządzenia</label>
-            <select
+            <input
+              type="text"
               name="device_type"
               value={filters.device_type}
               onChange={handleFilterChange}
               className="w-full border rounded px-2 py-1"
-            >
-              <option value="">Wszystkie</option>
-              <option value="switch">Switch</option>
-              <option value="router">Router</option>
-              <option value="access point">Access Point</option>
-            </select>
+              placeholder="np. switch"
+              autoComplete="off"
+            />
           </div>
           <div className="mb-3">
             <label className="block text-sm font-medium mb-1">Model</label>
@@ -342,6 +413,18 @@ const EditInventoryItem = () => {
               onChange={handleFilterChange}
               className="w-full border rounded px-2 py-1"
               placeholder="np. XR500"
+              autoComplete="off"
+            />
+          </div>
+          <div className="mb-3">
+            <label className="block text-sm font-medium mb-1">Numer seryjny</label>
+            <input
+              type="text"
+              name="serial"
+              value={filters.serial}
+              onChange={handleFilterChange}
+              className="w-full border rounded px-2 py-1"
+              placeholder="np. CISCO"
               autoComplete="off"
             />
           </div>
@@ -357,10 +440,21 @@ const EditInventoryItem = () => {
               <option value="Dostępny">Dostępny</option>
               <option value="Wypożyczony">Wypożyczony</option>
               <option value="Uszkodzony">Uszkodzony</option>
-              <option value="Zarchiwizowany">Zarchiwizowany</option>
             </select>
           </div>
           <div className="mb-3">
+            <label className="block text-sm font-medium mb-1">Faktura</label>
+            <input
+              type="text"
+              name="invoice"
+              value={filters.invoice || ""}
+              onChange={handleFilterChange}
+              className="w-full border rounded px-2 py-1"
+              placeholder="np. FV/2025/001"
+              autoComplete="off"
+            />
+          </div>
+          <div>
             <label className="block text-sm font-medium mb-1">Lokalizacja</label>
             <input
               type="text"
@@ -369,18 +463,6 @@ const EditInventoryItem = () => {
               onChange={handleFilterChange}
               className="w-full border rounded px-2 py-1"
               placeholder="np. Magazyn A"
-              autoComplete="off"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Numer seryjny</label>
-            <input
-              type="text"
-              name="serial"
-              value={filters.serial}
-              onChange={handleFilterChange}
-              className="w-full border rounded px-2 py-1"
-              placeholder="np. CISCO"
               autoComplete="off"
             />
           </div>
@@ -455,8 +537,14 @@ const EditInventoryItem = () => {
             {filteredStock.map((item, idx) => (
               <React.Fragment key={item.manufacturer + item.model}>
                 <tr
-                  className="bg-white transition-colors cursor-pointer hover:bg-blue-50"
-                  onClick={() => toggleExpand(idx)}
+                  className={`bg-white transition-colors ${
+                    item.instances.length > 0
+                      ? "cursor-pointer hover:bg-blue-50"
+                      : "cursor-default"
+                  }`}
+                  onClick={() => {
+                    if (item.instances.length > 0) toggleExpand(idx);
+                  }}
                 >
                   <TruncatedCell className="px-4 py-2 border-b max-w-[180px]" titleText={item.manufacturer}>
                     {item.manufacturer}
@@ -468,7 +556,14 @@ const EditInventoryItem = () => {
                     {item.model}
                   </TruncatedCell>
                   <TruncatedCell className="px-4 py-2 border-b max-w-[220px]" titleText={item.description}>
-                    {item.description}
+                    {item.description && item.description.trim() !== ""
+                      ? item.description
+                      : (
+                        <span className="bg-gray-300 text-gray-700 px-2 py-1 rounded text-xs font-semibold">
+                          Brak opisu
+                        </span>
+                      )
+                    }
                   </TruncatedCell>
                   <td className="px-4 py-2 border-b text-left w-20">{item.instances.length}</td>
                   <td className="px-4 py-2 border-b text-left w-24">
@@ -488,12 +583,14 @@ const EditInventoryItem = () => {
                     </button>
                   </td>
                   <td className="px-4 py-2 border-b text-center w-12">
-                    <span className="text-xl select-none pointer-events-none">
-                      {expanded[idx] ? "▲" : "▼"}
-                    </span>
+                    {item.instances.length > 0 ? (
+                      <span className="text-xl select-none pointer-events-none">
+                        {expanded[idx] ? "▲" : "▼"}
+                      </span>
+                    ) : null}
                   </td>
                 </tr>
-                {expanded[idx] && (
+                {item.instances.length > 0 && expanded[idx] && (
                   <tr>
                     <td colSpan={7} className="bg-gray-100 px-4 py-2">
                       <table className="w-full text-sm">
@@ -501,6 +598,7 @@ const EditInventoryItem = () => {
                           <tr>
                             <th className="px-2 py-1 text-left w-1/4 max-w-[180px]">Numer seryjny</th>
                             <th className="px-2 py-1 text-left w-1/4 max-w-[120px]">Stan</th>
+                            <th className="px-2 py-1 text-left w-1/4 max-w-[120px]">Faktura</th>
                             <th className="px-2 py-1 text-left w-1/4 max-w-[180px]">Lokalizacja</th>
                             <th className="px-2 py-1 text-left w-24">Akcja</th>
                           </tr>
@@ -517,8 +615,19 @@ const EditInventoryItem = () => {
                                     {statusLabels[inst.status] || inst.status}
                                   </span>
                                 </TruncatedCell>
+                                <TruncatedCell className="px-2 py-1 w-1/4 max-w-[120px]" titleText={inst.invoice || "Brak faktury"}>
+                                  {inst.invoice && inst.invoice.trim() !== ""
+                                    ? (inst.invoice.length > 20
+                                        ? inst.invoice.slice(0, 17) + "..."
+                                        : inst.invoice)
+                                    : <span className="bg-gray-300 text-gray-700 px-2 py-1 rounded text-xs font-semibold">Brak faktury</span>
+                                  }
+                                </TruncatedCell>
                                 <TruncatedCell className="px-2 py-1 w-1/4 max-w-[180px]" titleText={inst.location}>
-                                  {inst.location}
+                                  {inst.location
+                                    ? <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-semibold">{inst.location}</span>
+                                    : <span className="bg-gray-300 text-gray-700 px-2 py-1 rounded text-xs font-semibold">Brak lokalizacji</span>
+                                  }
                                 </TruncatedCell>
                                 <td className="px-2 py-1 w-24">
                                   <button
@@ -538,7 +647,7 @@ const EditInventoryItem = () => {
                                 </td>
                               </tr>
                               <tr>
-                                <td colSpan={4}>
+                                <td colSpan={5}>
                                   <hr className="border-t border-gray-300 my-1" />
                                 </td>
                               </tr>
@@ -571,6 +680,9 @@ const EditInventoryItem = () => {
                 onSubmit={handleEditSubmit}
                 message={editMessage}
                 count={editItem?.item?.instances?.length}
+                originalManufacturer={editItem?.item?.manufacturer}
+                originalDeviceType={editItem?.item?.device_type}
+                originalModel={editItem?.item?.model}
               />
             ) : (
               <EditInstanceForm
@@ -580,6 +692,7 @@ const EditInventoryItem = () => {
                 onSubmit={handleEditSubmit}
                 message={editMessage}
                 device={editItem?.item}
+                invoices={invoices}
               />
             )}
           </div>

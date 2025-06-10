@@ -11,14 +11,14 @@ const DeleteInstance = ({ device, instance, onCancel, onDelete, message }) => {
   }, [device.description]);
 
   const handleDelete = () => {
-    if (window.confirm("Czy na pewno chcesz usunąć ten egzemplarz? Tej operacji nie można cofnąć.")) {
+    if (window.confirm("Czy na pewno chcesz zarchiwizować ten egzemplarz? Tej operacji nie można cofnąć.")) {
       onDelete();
     }
   };
 
   return (
     <div className="p-6 bg-white rounded shadow max-w-lg w-full">
-      <h2 className="text-xl font-bold mb-4 text-red-700">Usuń egzemplarz</h2>
+      <h2 className="text-xl font-bold mb-4 text-red-700">Archiwizuj egzemplarz</h2>
       {message && <div className="mb-2 text-red-600">{message}</div>}
       <div className="space-y-3 mb-4">
         <div>
@@ -78,10 +78,19 @@ const DeleteInstance = ({ device, instance, onCancel, onDelete, message }) => {
           />
         </div>
         <div>
+          <label className="block font-medium mb-1">Faktura</label>
+          <input
+            type="text"
+            value={instance.invoice || ""}
+            className="w-full border rounded px-2 py-1 bg-gray-100 text-gray-700"
+            disabled
+          />
+        </div>
+        <div>
           <label className="block font-medium mb-1">Lokalizacja</label>
           <input
             type="text"
-            value={instance.location}
+            value={instance.location && instance.location.trim() !== "" ? instance.location : "Brak lokalizacji"}
             className="w-full border rounded px-2 py-1 bg-gray-100 text-gray-700"
             disabled
           />
@@ -100,7 +109,7 @@ const DeleteInstance = ({ device, instance, onCancel, onDelete, message }) => {
           className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
           onClick={handleDelete}
         >
-          Usuń
+          Archiwizuj
         </button>
       </div>
     </div>

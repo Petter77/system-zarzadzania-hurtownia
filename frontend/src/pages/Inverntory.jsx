@@ -49,6 +49,7 @@ const Inventory = () => {
     status: "",
     location: "",
     serial: "",
+    invoice: "",
   });
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("manufacturer");
@@ -107,19 +108,42 @@ const Inventory = () => {
   const filteredStock = stock
     .filter(item =>
       (!filters.manufacturer || item.manufacturer?.toLowerCase().startsWith(filters.manufacturer.toLowerCase())) &&
-      (!filters.device_type || item.device_type?.toLowerCase() === filters.device_type.toLowerCase()) &&
+      (!filters.device_type || item.device_type?.toLowerCase().includes(filters.device_type.toLowerCase())) &&
       (!filters.model || item.model?.toLowerCase().startsWith(filters.model.toLowerCase()))
     )
-    .map(item => ({
-      ...item,
-      quantity: item.instances.length,
-      instances: item.instances.filter(inst =>
-        (!filters.status || (inst.status && statusLabels[inst.status] === filters.status)) &&
-        (!filters.location || (inst.location && inst.location.toLowerCase().startsWith(filters.location.toLowerCase()))) &&
-        (!filters.serial || (inst.serial_number && inst.serial_number.toLowerCase().startsWith(filters.serial.toLowerCase())))
-      )
-    }))
-    .filter(item => item.instances.length > 0)
+    .map(item => {
+      let filteredInstances = item.instances;
+      if (item.instances.length > 0) {
+        filteredInstances = item.instances.filter(inst => {
+          if (inst.status === "archived" || inst.status === "Zarchiwizowany") return false;
+          const invoiceFilter = filters.invoice?.trim().toLowerCase();
+          let invoiceMatch = true;
+          if (invoiceFilter) {
+            if ("brak faktury".startsWith(invoiceFilter)) {
+              invoiceMatch = !inst.invoice || inst.invoice.trim() === "";
+            } else {
+              invoiceMatch = inst.invoice && inst.invoice.toLowerCase().startsWith(invoiceFilter);
+            }
+          }
+          return (
+            (!filters.status || (inst.status && statusLabels[inst.status] === filters.status)) &&
+            (!filters.location || (inst.location && inst.location.toLowerCase().startsWith(filters.location.toLowerCase()))) &&
+            (!filters.serial || (inst.serial_number && inst.serial_number.toLowerCase().startsWith(filters.serial.toLowerCase()))) &&
+            invoiceMatch
+          );
+        });
+      }
+      const anyInstanceFilter = filters.status || filters.location || filters.serial || filters.invoice;
+      if (anyInstanceFilter && filteredInstances.length === 0) {
+        return null;
+      }
+      return {
+        ...item,
+        quantity: item.instances.length,
+        instances: filteredInstances
+      };
+    })
+    .filter(item => item !== null)
     .sort((a, b) => {
       let aVal = a[sortBy];
       let bVal = b[sortBy];
@@ -179,17 +203,15 @@ const Inventory = () => {
           </div>
           <div className="mb-3">
             <label className="block text-sm font-medium mb-1">Typ urządzenia</label>
-            <select
+            <input
+              type="text"
               name="device_type"
               value={filters.device_type}
               onChange={handleFilterChange}
               className="w-full border rounded px-2 py-1"
-            >
-              <option value="">Wszystkie</option>
-              <option value="switch">Switch</option>
-              <option value="router">Router</option>
-              <option value="access point">Access Point</option>
-            </select>
+              placeholder="np. switch"
+              autoComplete="off"
+            />
           </div>
           <div className="mb-3">
             <label className="block text-sm font-medium mb-1">Model</label>
@@ -200,6 +222,18 @@ const Inventory = () => {
               onChange={handleFilterChange}
               className="w-full border rounded px-2 py-1"
               placeholder="np. XR500"
+              autoComplete="off"
+            />
+          </div>
+          <div className="mb-3">
+            <label className="block text-sm font-medium mb-1">Numer seryjny</label>
+            <input
+              type="text"
+              name="serial"
+              value={filters.serial}
+              onChange={handleFilterChange}
+              className="w-full border rounded px-2 py-1"
+              placeholder="np. CISCO"
               autoComplete="off"
             />
           </div>
@@ -215,10 +249,21 @@ const Inventory = () => {
               <option value="Dostępny">Dostępny</option>
               <option value="Wypożyczony">Wypożyczony</option>
               <option value="Uszkodzony">Uszkodzony</option>
-              <option value="Zarchiwizowany">Zarchiwizowany</option>
             </select>
           </div>
           <div className="mb-3">
+            <label className="block text-sm font-medium mb-1">Faktura</label>
+            <input
+              type="text"
+              name="invoice"
+              value={filters.invoice}
+              onChange={handleFilterChange}
+              className="w-full border rounded px-2 py-1"
+              placeholder="np. FV/2025/001"
+              autoComplete="off"
+            />
+          </div>
+          <div>
             <label className="block text-sm font-medium mb-1">Lokalizacja</label>
             <input
               type="text"
@@ -227,18 +272,6 @@ const Inventory = () => {
               onChange={handleFilterChange}
               className="w-full border rounded px-2 py-1"
               placeholder="np. Magazyn A"
-              autoComplete="off"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Numer seryjny</label>
-            <input
-              type="text"
-              name="serial"
-              value={filters.serial}
-              onChange={handleFilterChange}
-              className="w-full border rounded px-2 py-1"
-              placeholder="np. CISCO"
               autoComplete="off"
             />
           </div>
@@ -306,11 +339,13 @@ const Inventory = () => {
             {filteredStock.map((item, idx) => (
               <React.Fragment key={item.manufacturer + item.model}>
                 <tr
-                  className={`bg-white transition-colors cursor-pointer ${
-                    showFilters ? "hover:bg-gray-200" : "hover:bg-blue-50"
+                  className={`bg-white transition-colors ${
+                    item.instances.length > 0
+                      ? "cursor-pointer " + (showFilters ? "hover:bg-gray-200" : "hover:bg-blue-50")
+                      : "cursor-default"
                   }`}
                   onClick={() => {
-                    toggleExpand(idx);
+                    if (item.instances.length > 0) toggleExpand(idx);
                   }}
                 >
                   <TruncatedCell className="px-4 py-2 border-b max-w-[180px]" titleText={item.manufacturer}>
@@ -329,20 +364,25 @@ const Inventory = () => {
                     )}
                   </TruncatedCell>
                   <TruncatedCell className="px-4 py-2 border-b max-w-[220px]" titleText={item.description}>
-                    {item.description ?? (
-                      <span className="bg-gray-300 text-gray-700 px-2 py-1 rounded text-xs font-semibold">
-                        Brak opisu
-                      </span>
-                    )}
+                    {item.description && item.description.trim() !== ""
+                      ? item.description
+                      : (
+                        <span className="bg-gray-300 text-gray-700 px-2 py-1 rounded text-xs font-semibold">
+                          Brak opisu
+                        </span>
+                      )
+                    }
                   </TruncatedCell>
                   <td className="px-4 py-2 border-b text-left w-20">{item.instances.length}</td>
                   <td className="px-4 py-2 border-b text-center w-12">
-                    <span className="text-xl select-none pointer-events-none">
-                      {expanded[idx] ? "▲" : "▼"}
-                    </span>
+                    {item.instances.length > 0 ? (
+                      <span className="text-xl select-none pointer-events-none">
+                        {expanded[idx] ? "▲" : "▼"}
+                      </span>
+                    ) : null}
                   </td>
                 </tr>
-                {expanded[idx] && (
+                {item.instances.length > 0 && expanded[idx] && (
                   <tr>
                     <td colSpan={6} className="bg-gray-100 px-4 py-2">
                       <table className="w-full text-sm">
@@ -350,6 +390,7 @@ const Inventory = () => {
                           <tr>
                             <th className="px-2 py-1 text-left w-1/4 max-w-[180px]">Numer seryjny</th>
                             <th className="px-2 py-1 text-left w-1/4 max-w-[120px]">Stan</th>
+                            <th className="px-2 py-1 text-left w-1/4 max-w-[120px]">Faktura</th>
                             <th className="px-2 py-1 text-left w-1/4 max-w-[180px]">Lokalizacja</th>
                           </tr>
                         </thead>
@@ -374,6 +415,14 @@ const Inventory = () => {
                                       : "Nieznany"}
                                   </span>
                                 </TruncatedCell>
+                                <TruncatedCell className="px-2 py-1 w-1/4 max-w-[120px]" titleText={inst.invoice || "Brak faktury"}>
+                                  {inst.invoice && inst.invoice.trim() !== ""
+                                    ? (inst.invoice.length > 20
+                                        ? inst.invoice.slice(0, 17) + "..."
+                                        : inst.invoice)
+                                    : <span className="bg-gray-300 text-gray-700 px-2 py-1 rounded text-xs font-semibold">Brak faktury</span>
+                                  }
+                                </TruncatedCell>
                                 <TruncatedCell className="px-2 py-1 w-1/4 max-w-[180px]" titleText={inst.location || "Brak lokalizacji"}>
                                   {inst.location
                                     ? <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-semibold">{inst.location}</span>
@@ -382,7 +431,7 @@ const Inventory = () => {
                                 </TruncatedCell>
                               </tr>
                               <tr>
-                                <td colSpan={3}>
+                                <td colSpan={4}>
                                   <hr className="border-t border-gray-300 my-1" />
                                 </td>
                               </tr>

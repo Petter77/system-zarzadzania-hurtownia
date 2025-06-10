@@ -8,11 +8,15 @@ const AddInventoryItem = () => {
     model: "",
     description: "",
     location: "",
+    invoice: "",
     serialNumbers: [""],
   });
   const [message, setMessage] = useState(null);
   const [descLocked, setDescLocked] = useState(false);
   const [lastFetched, setLastFetched] = useState({ manufacturer: "", device_type: "", model: "" });
+  const [lastFetchedDesc, setLastFetchedDesc] = useState(undefined);
+  const [serialErrors, setSerialErrors] = useState([]);
+  const [invoices, setInvoices] = useState([]);
   const descRef = useRef(null);
   const addButtonRef = useRef(null);
 
@@ -24,12 +28,9 @@ const AddInventoryItem = () => {
   }, [form.description, descLocked]);
 
   useEffect(() => {
-    document.body.style.overflowY = "";
-    document.documentElement.style.overflowY = "";
-    return () => {
-      document.body.style.overflowY = "";
-      document.documentElement.style.overflowY = "";
-    };
+    axios.get("http://localhost:3000/inventory/invoices")
+      .then(res => setInvoices(res.data))
+      .catch(() => setInvoices([]));
   }, []);
 
   const fetchDescription = async (manufacturer, device_type, model) => {
@@ -37,18 +38,34 @@ const AddInventoryItem = () => {
       const res = await axios.get("http://localhost:3000/inventory/description", {
         params: { manufacturer, device_type, model }
       });
-      if (res.data && res.data.description) {
-        setForm(f => ({ ...f, description: res.data.description }));
+      if (res.data && "description" in res.data) {
+        setForm(f => ({ ...f, description: res.data.description || "" }));
         setDescLocked(true);
         setLastFetched({ manufacturer, device_type, model });
+        setLastFetchedDesc(res.data.description);
       } else {
         setDescLocked(false);
         setLastFetched({ manufacturer: "", device_type: "", model: "" });
+        setLastFetchedDesc(undefined);
       }
     } catch (err) {
       setDescLocked(false);
       setLastFetched({ manufacturer: "", device_type: "", model: "" });
+      setLastFetchedDesc(undefined);
     }
+  };
+
+  const getDuplicateSerialIndexes = (serialNumbers) => {
+    const counts = {};
+    serialNumbers.forEach((sn, idx) => {
+      const val = sn.trim();
+      if (!val) return;
+      if (!counts[val]) counts[val] = [];
+      counts[val].push(idx);
+    });
+    return Object.values(counts)
+      .filter(arr => arr.length > 1)
+      .flat();
   };
 
   const handleChange = (e) => {
@@ -65,6 +82,7 @@ const AddInventoryItem = () => {
           setDescLocked(false);
           setForm(f => ({ ...f, description: "" }));
           setLastFetched({ manufacturer: "", device_type: "", model: "" });
+          setLastFetchedDesc(undefined);
         }
         if (
           (name === "manufacturer" ? value : updated.manufacturer) &&
@@ -86,6 +104,9 @@ const AddInventoryItem = () => {
     const serialNumbers = [...form.serialNumbers];
     serialNumbers[idx] = value;
     setForm({ ...form, serialNumbers });
+
+    const dupes = getDuplicateSerialIndexes(serialNumbers);
+    setSerialErrors(dupes);
   };
 
   const addSerialField = () => {
@@ -104,6 +125,8 @@ const AddInventoryItem = () => {
     const serialNumbers = [...form.serialNumbers];
     serialNumbers.splice(idx, 1);
     setForm({ ...form, serialNumbers });
+    const dupes = getDuplicateSerialIndexes(serialNumbers);
+    setSerialErrors(dupes);
   };
 
   const handleSubmit = async (e) => {
@@ -111,8 +134,15 @@ const AddInventoryItem = () => {
     setMessage(null);
 
     const serials = form.serialNumbers.map(s => s.trim()).filter(s => s !== "");
-    if (serials.length !== new Set(serials).size) {
+    const dupes = getDuplicateSerialIndexes(form.serialNumbers);
+    setSerialErrors(dupes);
+    if (dupes.length > 0) {
       setMessage("Numery seryjne muszą być unikalne.");
+      return;
+    }
+
+    if (form.invoice && !invoices.includes(form.invoice)) {
+      setMessage("Podany numer faktury nie istnieje w systemie.");
       return;
     }
 
@@ -129,6 +159,7 @@ const AddInventoryItem = () => {
         item_id: itemId,
         serialNumbers: serials,
         location: form.location,
+        invoice: form.invoice || null,
       });
 
       setMessage("Sprzęt został dodany!");
@@ -138,17 +169,46 @@ const AddInventoryItem = () => {
         model: "",
         description: "",
         location: "",
+        invoice: "",
         serialNumbers: [""],
       });
       setDescLocked(false);
       setLastFetched({ manufacturer: "", device_type: "", model: "" });
+      setLastFetchedDesc(undefined);
+      setSerialErrors([]);
     } catch (err) {
-      if (err.response && err.response.data && err.response.data.error) {
+      if (
+        err.response &&
+        err.response.data &&
+        err.response.data.error &&
+        err.response.data.existingSerials
+      ) {
+        setMessage(err.response.data.error);
+
+        const existing = err.response.data.existingSerials;
+        const errorIdxs = [];
+        form.serialNumbers.forEach((sn, idx) => {
+          if (existing.includes(sn.trim())) errorIdxs.push(idx);
+        });
+        setSerialErrors(errorIdxs);
+      } else if (err.response && err.response.data && err.response.data.error) {
         setMessage(err.response.data.error);
       } else {
         setMessage("Błąd podczas dodawania sprzętu.");
       }
     }
+  };
+
+  const isErrorMessage = (msg) => {
+    if (!msg) return false;
+    const lower = msg.toLowerCase();
+    return (
+      lower.includes("błąd") ||
+      lower.includes("nie istnieje") ||
+      lower.includes("unikalne") ||
+      lower.includes("istnieją") ||
+      lower.includes("urządzenie o takich numerach seryjnych")
+    );
   };
 
   return (
@@ -159,7 +219,13 @@ const AddInventoryItem = () => {
         className="bg-white rounded shadow p-6 w-full max-w-lg space-y-4 mb-16"
       >
         {message && (
-          <div className="text-center text-sm font-semibold text-blue-600 mb-2">{message}</div>
+          <div
+            className={`text-center text-sm font-semibold mb-2 ${
+              isErrorMessage(message) ? "text-red-600" : "text-blue-600"
+            }`}
+          >
+            {message}
+          </div>
         )}
         <div>
           <label className="block font-medium mb-1">Producent</label>
@@ -208,14 +274,27 @@ const AddInventoryItem = () => {
             value={form.description}
             onChange={handleChange}
             className="w-full border rounded px-2 py-1 resize-none"
-            placeholder="np. Przełącznik warstwy 2, 24 porty"
+            placeholder={lastFetchedDesc === "" ? "" : "np. Przełącznik warstwy 2, 24 porty"}
             maxLength={256}
             rows={4}
-            disabled={descLocked}
+            disabled={descLocked || lastFetchedDesc !== undefined}
             style={{
-              ...(descLocked ? { backgroundColor: "#f3f4f6", color: "#6b7280" } : {}),
+              ...((descLocked || lastFetchedDesc !== undefined) ? { backgroundColor: "#f3f4f6", color: "#6b7280" } : {}),
               overflow: "hidden"
             }}
+          />
+        </div>
+        <div>
+          <label className="block font-medium mb-1">Faktura</label>
+          <input
+            type="text"
+            name="invoice"
+            value={form.invoice}
+            onChange={handleChange}
+            className="w-full border rounded px-2 py-1"
+            placeholder="np. FV/2023/001"
+            maxLength={100}
+            autoComplete="off"
           />
         </div>
         <div>
@@ -238,7 +317,7 @@ const AddInventoryItem = () => {
                 type="text"
                 value={sn}
                 onChange={e => handleSerialChange(idx, e.target.value)}
-                className="w-full border rounded px-2 py-1"
+                className={`w-full border rounded px-2 py-1 ${serialErrors.includes(idx) ? "border-red-500" : ""}`}
                 placeholder={`Numer seryjny #${idx + 1}`}
                 required
                 maxLength={100}
