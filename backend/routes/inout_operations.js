@@ -62,7 +62,7 @@ router.post('/toService', (req, res) => {
 
   const values = item_ids.map((instanceId) => [
     instanceId,
-    'to_service',                  // <- zmieniono typ operacji
+    'toService',                  // <- zmieniono typ operacji
     new Date(),
     1,
     service_address                // <- dodano adres serwisu
