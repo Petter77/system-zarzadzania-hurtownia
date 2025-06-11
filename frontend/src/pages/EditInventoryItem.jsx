@@ -579,7 +579,7 @@ const EditInventoryItem = () => {
                       onClick={e => { e.stopPropagation(); handleDeleteDevice(item); }}
                       style={{ cursor: "pointer" }}
                     >
-                      Usuń
+                      Archiwizuj
                     </button>
                   </td>
                   <td className="px-4 py-2 border-b text-center w-12">
@@ -642,7 +642,7 @@ const EditInventoryItem = () => {
                                     onClick={e => { e.stopPropagation(); handleDeleteInstance(item, inst); }}
                                     style={{ cursor: "pointer" }}
                                   >
-                                    Usuń
+                                    Archiwizuj
                                   </button>
                                 </td>
                               </tr>

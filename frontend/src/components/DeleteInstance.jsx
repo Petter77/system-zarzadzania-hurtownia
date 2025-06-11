@@ -72,7 +72,17 @@ const DeleteInstance = ({ device, instance, onCancel, onDelete, message }) => {
           <label className="block font-medium mb-1">Stan</label>
           <input
             type="text"
-            value={instance.status}
+            value={
+              instance.status === "available"
+                ? "Dostępny"
+                : instance.status === "borrowed"
+                ? "Wypożyczony"
+                : instance.status === "damaged"
+                ? "Uszkodzony"
+                : instance.status === "archived"
+                ? "Zarchiwizowany"
+                : instance.status
+            }
             className="w-full border rounded px-2 py-1 bg-gray-100 text-gray-700"
             disabled
           />

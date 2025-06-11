@@ -10,17 +10,17 @@ const ManageInventory = () => {
       <div className="flex flex-col md:flex-row gap-8">
         <div
           onClick={() => navigate("/manageInventory/add")}
-          className="cursor-pointer bg-white rounded-xl shadow-lg p-10 flex flex-col items-center justify-center hover:bg-blue-50 transition w-72 h-48"
+          className="cursor-pointer bg-white rounded-xl shadow-lg p-10 flex flex-col items-center justify-center hover:bg-blue-50 transition w-80 h-48"
         >
           <span className="text-5xl mb-4">➕</span>
           <span className="text-xl font-semibold">Dodaj sprzęt</span>
         </div>
         <div
           onClick={() => navigate("/manageInventory/edit")}
-          className="cursor-pointer bg-white rounded-xl shadow-lg p-10 flex flex-col items-center justify-center hover:bg-blue-50 transition w-72 h-48"
+          className="cursor-pointer bg-white rounded-xl shadow-lg p-10 flex flex-col items-center justify-center hover:bg-blue-50 transition w-80 h-48"
         >
           <span className="text-5xl mb-4">📝</span>
-          <span className="text-xl font-semibold">Edytuj/Usuń sprzęt</span>
+          <span className="text-xl font-semibold">Edytuj/Archiwizuj sprzęt</span>
         </div>
       </div>
     </div>
